@@ -1,21 +1,18 @@
-import { readFile } from "node:fs/promises";
-import path from "node:path";
 import exampleCoach from "./example-coach/assistant";
 
 // The list of all your assistants.
+// The name on the left is the web address: yoursite.com/example-coach
 // To add one: copy the "example-coach" folder, rename the copy,
-// then add a line below like:  "your-folder-name": yourAssistant,
+// then add a line below like:  "your-assistant": yourAssistant,
 export const assistants = {
   "example-coach": exampleCoach,
 };
 
-export type AssistantSlug = keyof typeof assistants;
+type AssistantSlug = keyof typeof assistants;
 
+// Everything except the instructions, which stay on the server.
 export function getAssistant(slug: string) {
-  if (!(slug in assistants)) return null;
-  return { slug: slug as AssistantSlug, ...assistants[slug as AssistantSlug] };
-}
-
-export async function getInstructions(slug: AssistantSlug) {
-  return readFile(path.join(process.cwd(), "assistants", slug, "instructions.md"), "utf8");
+  if (!Object.hasOwn(assistants, slug)) return null;
+  const { name, description, starters } = assistants[slug as AssistantSlug];
+  return { slug: slug as AssistantSlug, name, description, starters };
 }

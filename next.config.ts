@@ -1,11 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  outputFileTracingIncludes: {
-    "/api/chat": ["./assistants/**/*.md"],
-  },
   turbopack: {
     rules: {
+      "*.md": { type: "text" },
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],
         as: "*.css",

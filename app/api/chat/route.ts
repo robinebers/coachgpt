@@ -1,51 +1,55 @@
 import {
+  consumeStream,
   convertToModelMessages,
-  createIdGenerator,
   createUIMessageStreamResponse,
+  generateId,
   isStepCount,
   streamText,
   tool,
   toUIMessageStream,
-  validateUIMessages,
   type UIMessage,
 } from "ai";
 import { z } from "zod";
-import { getAssistant, getInstructions } from "@/assistants";
+import { assistants, getAssistant } from "@/assistants";
 import { coachConfig } from "@/coach.config";
 import { getUser } from "@/lib/auth";
-import { getChat, getMessages, saveMessages, titleFrom } from "@/lib/chats";
+import { getChat, getMessages, saveMessage, titleFrom } from "@/lib/chats";
 import { chats, db } from "@/lib/db";
 import { searchKnowledge } from "@/lib/knowledge";
-import { checkLimits, recordUsage } from "@/lib/limits";
+import { countMessage } from "@/lib/limits";
 
 export async function POST(request: Request) {
   const user = await getUser();
   const body = (await request.json()) as { id: string; assistant: string; message: UIMessage };
 
-  const assistant = getAssistant(body.assistant);
-  if (!assistant) return Response.json({ error: "Unknown assistant" }, { status: 404 });
+  const chat = await getChat(body.id, user.id);
+  const assistant = getAssistant(chat?.assistantSlug ?? body.assistant);
+  if (!assistant) return new Response("Unknown assistant", { status: 404 });
 
-  const limitMessage = user.isAdmin ? null : await checkLimits(user.id);
+  const limitMessage = user.isAdmin ? null : await countMessage(user.id);
   if (limitMessage) return new Response(limitMessage, { status: 429 });
 
-  const chat = await getChat(body.id, user.id);
+  const text = body.message.parts
+    .flatMap((part) => (part.type === "text" ? [part.text] : []))
+    .join("\n")
+    .slice(0, 8000);
+  const message: UIMessage = { id: body.message.id, role: "user", parts: [{ type: "text", text }] };
+
   if (!chat) {
     await db.insert(chats).values({
       id: body.id,
       userId: user.id,
       assistantSlug: assistant.slug,
-      title: titleFrom(body.message),
+      title: titleFrom(message),
     });
   }
-
-  const history = chat ? await getMessages(chat.id) : [];
-  const allMessages = await validateUIMessages({ messages: [...history, body.message] });
-  await saveMessages(body.id, [body.message]);
+  const allMessages = [...(chat ? await getMessages(chat.id) : []), message];
+  await saveMessage(body.id, message);
 
   const result = streamText({
     model: coachConfig.models.chat,
     reasoning: coachConfig.models.thinking,
-    system: await getInstructions(assistant.slug),
+    system: assistants[assistant.slug].instructions,
     messages: await convertToModelMessages(allMessages),
     tools: {
       searchKnowledge: tool({
@@ -57,16 +61,15 @@ export async function POST(request: Request) {
     },
     stopWhen: isStepCount(5),
     providerOptions: { gateway: { user: user.id } },
-    onFinish: ({ totalUsage }) => recordUsage(user.id, totalUsage),
   });
-  result.consumeStream();
 
   return createUIMessageStreamResponse({
     stream: toUIMessageStream({
       stream: result.stream,
       originalMessages: allMessages,
-      generateMessageId: createIdGenerator({ prefix: "msg", size: 16 }),
-      onEnd: ({ responseMessage }) => saveMessages(body.id, [responseMessage]),
+      generateMessageId: generateId,
+      onEnd: ({ responseMessage }) => saveMessage(body.id, responseMessage),
     }),
+    consumeSseStream: consumeStream,
   });
 }

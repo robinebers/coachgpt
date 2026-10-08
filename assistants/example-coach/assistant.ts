@@ -1,10 +1,12 @@
 import type { Assistant } from "../types";
+import instructions from "./instructions.md";
 
 // This is one assistant. It is like one custom GPT.
-// The folder name ("example-coach") is its web address: yoursite.com/example-coach
 // The AI's instructions live next to this file, in instructions.md.
 
 export default {
+  instructions,
+
   // The name people see on the home page and at the top of the chat.
   name: "Example Coach",
 

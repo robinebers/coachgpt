@@ -11,15 +11,9 @@ import {
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
-import {
-  PromptInput,
-  PromptInputBody,
-  PromptInputFooter,
-  PromptInputSubmit,
-  PromptInputTextarea,
-} from "@/components/ai-elements/prompt-input";
 import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 type ChatProps = {
   id: string;
@@ -42,8 +36,10 @@ export function Chat({ id, assistant, initialMessages }: ChatProps) {
     onFinish: () => router.refresh(),
   });
 
+  const busy = status === "submitted" || status === "streaming";
+
   function send(text: string) {
-    if (!text.trim()) return;
+    if (!text.trim() || busy) return;
     if (messages.length === 0) window.history.replaceState(null, "", `/${assistant.slug}/${id}`);
     void sendMessage({ text });
     setInput("");
@@ -75,18 +71,35 @@ export function Chat({ id, assistant, initialMessages }: ChatProps) {
         <ConversationScrollButton />
       </Conversation>
 
-      <PromptInput onSubmit={({ text }) => send(text)} className="mt-4">
-        <PromptInputBody>
-          <PromptInputTextarea
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            placeholder={`Message ${assistant.name}`}
-          />
-        </PromptInputBody>
-        <PromptInputFooter className="justify-end">
-          <PromptInputSubmit status={status} onStop={stop} disabled={!input.trim() && status === "ready"} />
-        </PromptInputFooter>
-      </PromptInput>
+      <form
+        className="mt-4 flex items-end gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          send(input);
+        }}
+      >
+        <Textarea
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+              event.preventDefault();
+              send(input);
+            }
+          }}
+          placeholder={`Message ${assistant.name}`}
+          className="max-h-48"
+        />
+        {busy ? (
+          <Button type="button" variant="outline" onClick={stop}>
+            Stop
+          </Button>
+        ) : (
+          <Button type="submit" disabled={!input.trim()}>
+            Send
+          </Button>
+        )}
+      </form>
     </div>
   );
 }

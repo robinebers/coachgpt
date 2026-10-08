@@ -9,9 +9,8 @@ const { models } = coachConfig;
 async function readFileText(fileName: string, bytes: Uint8Array) {
   if (!fileName.toLowerCase().endsWith(".pdf")) return new TextDecoder().decode(bytes);
 
-  const { text } = await generateText({
+  const { text, finishReason } = await generateText({
     model: models.chat,
-    reasoning: models.thinking,
     messages: [
       {
         role: "user",
@@ -25,13 +24,14 @@ async function readFileText(fileName: string, bytes: Uint8Array) {
       },
     ],
   });
+  if (finishReason !== "stop") throw new Error("This PDF is too long. Split it into smaller files.");
   return text;
 }
 
 const chunkSize = 1500;
 const chunkOverlap = 200;
 
-export function splitIntoChunks(text: string) {
+function splitIntoChunks(text: string) {
   const paragraphs = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   const pieces: string[] = [];
   let current = "";
@@ -50,10 +50,7 @@ export function splitIntoChunks(text: string) {
   return pieces;
 }
 
-export async function processDocument(documentId: string) {
-  const [document] = await db.select().from(documents).where(eq(documents.id, documentId));
-  if (!document) throw new Error("File not found");
-
+export async function processDocument(document: typeof documents.$inferSelect) {
   try {
     const blob = await get(document.blobPathname, { access: "private" });
     if (blob?.statusCode !== 200) throw new Error("The uploaded file is missing from storage.");
@@ -67,13 +64,10 @@ export async function processDocument(documentId: string) {
       values: pieces,
     });
 
-    await db.delete(chunks).where(eq(chunks.documentId, document.id));
-    const rows = pieces.map((content, position) => ({
+    const rows = pieces.map((content, i) => ({
       documentId: document.id,
-      assistantSlug: document.assistantSlug,
-      position,
       content,
-      embedding: embeddings[position],
+      embedding: embeddings[i],
     }));
     for (let i = 0; i < rows.length; i += 100) {
       await db.insert(chunks).values(rows.slice(i, i + 100));
@@ -85,7 +79,7 @@ export async function processDocument(documentId: string) {
   } catch (error) {
     await db
       .update(documents)
-      .set({ status: "failed", error: error instanceof Error ? error.message : String(error) })
+      .set({ status: "failed", error: (error as Error).message })
       .where(eq(documents.id, document.id));
   }
 }
@@ -106,14 +100,14 @@ export async function searchKnowledge(assistantSlug: string, query: string) {
       .select(columns)
       .from(chunks)
       .innerJoin(documents, eq(chunks.documentId, documents.id))
-      .where(eq(chunks.assistantSlug, assistantSlug))
+      .where(eq(documents.assistantSlug, assistantSlug))
       .orderBy(cosineDistance(chunks.embedding, embedding))
       .limit(candidatesPerSearch),
     db
       .select(columns)
       .from(chunks)
       .innerJoin(documents, eq(chunks.documentId, documents.id))
-      .where(and(eq(chunks.assistantSlug, assistantSlug), sql`${chunks.search} @@ ${keywordQuery}`))
+      .where(and(eq(documents.assistantSlug, assistantSlug), sql`${chunks.search} @@ ${keywordQuery}`))
       .orderBy(desc(sql`ts_rank(${chunks.search}, ${keywordQuery})`))
       .limit(candidatesPerSearch),
   ]);

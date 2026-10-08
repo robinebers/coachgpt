@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireAdmin } from "@/lib/auth";
 import { db, documents } from "@/lib/db";
+import { allowedExtensions } from "@/lib/file-types";
 import { getUsageToday } from "@/lib/limits";
 import { deleteDocument } from "./actions";
 import { AutoRefresh } from "./auto-refresh";
@@ -45,7 +46,7 @@ export default async function AdminPage() {
           <CardTitle>Today</CardTitle>
           <CardDescription>Counts reset every day at midnight UTC.</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-3 gap-4 text-sm">
+        <CardContent className="grid grid-cols-2 gap-4 text-sm">
           <div>
             <div className="font-semibold text-xl">
               {usageToday.messages} / {coachConfig.limits.messagesTotalPerDay}
@@ -56,12 +57,6 @@ export default async function AdminPage() {
             <div className="font-semibold text-xl">{usageToday.people}</div>
             <div className="text-muted-foreground">people chatting</div>
           </div>
-          <div>
-            <div className="font-semibold text-xl">
-              {(usageToday.inputTokens + usageToday.outputTokens).toLocaleString()}
-            </div>
-            <div className="text-muted-foreground">tokens</div>
-          </div>
         </CardContent>
       </Card>
 
@@ -70,7 +65,9 @@ export default async function AdminPage() {
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div className="flex flex-col gap-1.5">
               <CardTitle>{assistant.name}</CardTitle>
-              <CardDescription>Knowledge files this assistant can search: PDF, .txt, .md, .srt, .vtt</CardDescription>
+              <CardDescription>
+                Knowledge files this assistant can search: {allowedExtensions.map((e) => `.${e}`).join(", ")}
+              </CardDescription>
             </div>
             <UploadFiles assistantSlug={slug} />
           </CardHeader>

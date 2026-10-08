@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import { generateId } from "ai";
 import { notFound } from "next/navigation";
 import { getAssistant } from "@/assistants";
 import { Chat } from "@/components/chat";
@@ -9,6 +9,6 @@ export default async function NewChatPage({ params }: PageProps<"/[assistant]">)
   const assistant = getAssistant((await params).assistant);
   if (!assistant) notFound();
 
-  const id = nanoid();
+  const id = generateId();
   return <Chat key={id} id={id} assistant={assistant} initialMessages={[]} />;
 }

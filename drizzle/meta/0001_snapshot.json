@@ -1,5 +1,5 @@
 {
-  "id": "060893be-bb8a-40d8-83ee-2dc67f7a584b",
+  "id": "5a51bcb2-8b69-4757-8880-4b30b8c62dc7",
   "prevId": "7949d905-5076-4d49-ac17-a98239973558",
   "version": "7",
   "dialect": "postgresql",
@@ -94,18 +94,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "assistant_slug": {
-          "name": "assistant_slug",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "position": {
-          "name": "position",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
         "content": {
           "name": "content",
           "type": "text",
@@ -130,21 +118,6 @@
         }
       },
       "indexes": {
-        "chunks_assistant_idx": {
-          "name": "chunks_assistant_idx",
-          "columns": [
-            {
-              "expression": "assistant_slug",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "chunks_document_idx": {
           "name": "chunks_document_idx",
           "columns": [
@@ -246,23 +219,7 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "documents_assistant_idx": {
-          "name": "documents_assistant_idx",
-          "columns": [
-            {
-              "expression": "assistant_slug",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -372,39 +329,9 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
-        },
-        "input_tokens": {
-          "name": "input_tokens",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "output_tokens": {
-          "name": "output_tokens",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
         }
       },
-      "indexes": {
-        "usage_day_idx": {
-          "name": "usage_day_idx",
-          "columns": [
-            {
-              "expression": "day",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "usage_user_id_day_pk": {

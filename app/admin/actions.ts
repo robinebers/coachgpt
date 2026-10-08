@@ -19,8 +19,8 @@ export async function addDocument(assistantSlug: string, name: string, blobPathn
   const [document] = await db
     .insert(documents)
     .values({ assistantSlug, name, blobPathname, status: "processing" })
-    .returning({ id: documents.id });
-  after(() => processDocument(document.id));
+    .returning();
+  after(() => processDocument(document));
   revalidatePath("/admin");
 }
 

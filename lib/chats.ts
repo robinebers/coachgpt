@@ -1,5 +1,5 @@
 import type { UIMessage } from "ai";
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { chats, db, messages } from "@/lib/db";
 
 export async function listChats(userId: string) {
@@ -28,12 +28,8 @@ export async function getMessages(chatId: string): Promise<UIMessage[]> {
   return rows.map(({ id, role, parts }) => ({ id, role, parts }));
 }
 
-export async function saveMessages(chatId: string, newMessages: UIMessage[]) {
-  if (newMessages.length === 0) return;
-  await db
-    .insert(messages)
-    .values(newMessages.map(({ id, role, parts }) => ({ id, chatId, role, parts })))
-    .onConflictDoUpdate({ target: messages.id, set: { parts: sql`excluded.parts` } });
+export async function saveMessage(chatId: string, { id, role, parts }: UIMessage) {
+  await db.insert(messages).values({ id, chatId, role, parts });
   await db.update(chats).set({ updatedAt: new Date() }).where(eq(chats.id, chatId));
 }
 

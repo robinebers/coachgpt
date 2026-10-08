@@ -55,7 +55,6 @@ export const documents = pgTable(
     error: text("error"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (t) => [index("documents_assistant_idx").on(t.assistantSlug)],
 );
 
 export const chunks = pgTable(
@@ -65,8 +64,6 @@ export const chunks = pgTable(
     documentId: uuid("document_id")
       .notNull()
       .references(() => documents.id, { onDelete: "cascade" }),
-    assistantSlug: text("assistant_slug").notNull(),
-    position: integer("position").notNull(),
     content: text("content").notNull(),
     embedding: vector("embedding", { dimensions: 1024 }).notNull(),
     search: tsvector("search")
@@ -74,7 +71,6 @@ export const chunks = pgTable(
       .generatedAlwaysAs(sql`to_tsvector('simple', "content")`),
   },
   (t) => [
-    index("chunks_assistant_idx").on(t.assistantSlug),
     index("chunks_document_idx").on(t.documentId),
     index("chunks_search_idx").using("gin", t.search),
   ],
@@ -86,8 +82,6 @@ export const usage = pgTable(
     userId: text("user_id").notNull(),
     day: text("day").notNull(),
     messages: integer("messages").notNull().default(0),
-    inputTokens: integer("input_tokens").notNull().default(0),
-    outputTokens: integer("output_tokens").notNull().default(0),
   },
-  (t) => [primaryKey({ columns: [t.userId, t.day] }), index("usage_day_idx").on(t.day)],
+  (t) => [primaryKey({ columns: [t.userId, t.day] })],
 );

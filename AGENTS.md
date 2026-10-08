@@ -100,7 +100,7 @@ Steps:
 1. Pick a slug: the GPT's name in small letters with dashes, like `sales-coach`. It becomes the web address (`/sales-coach`).
 2. Copy `assistants/example-coach/` to `assistants/<slug>/`.
 3. Ask them to paste each field into the chat (Name, Description, Starters, Instructions). Instructions are their work, not a secret, so pasting them is fine. Put each field in the right file. Keep the instructions word for word.
-4. Add the assistant to `assistants/index.ts`: import it, then add it to the `assistants` list.
+4. Add the assistant to `assistants/index.ts`: import it, then add it to the `assistants` list with the slug as its key (`"sales-coach": salesCoach`).
 5. If the example coach isn't needed anymore, remove it from `assistants/index.ts` and delete its folder.
 6. Run `pnpm typecheck`, then commit and push.
 7. Once the live app has updated, they open `/admin` and upload the knowledge files for that assistant.
@@ -110,6 +110,7 @@ Tell them plainly:
 - **ChatGPT doesn't let you download knowledge files.** They need the original files from their computer, Google Drive, or wherever they first made them.
 - Supported files: `.pdf`, `.txt`, `.md`, `.srt`, `.vtt`.
 - After upload, a file shows "reading…" for a little while, then "ready". If it shows "failed", hover over it to see why.
+- Very long PDFs (a whole book) may fail. Split them into smaller files.
 - GPT extras like web browsing, image making, code running, and Actions are not part of this app.
 
 ## Models
@@ -165,13 +166,15 @@ Then open http://localhost:3000.
 
 - `app/(chat)/`: the sidebar layout, the home page (assistant picker), and the chat pages
 - `app/admin/`: upload, file status, invites, today's usage, plus server actions
-- `app/api/chat/route.ts`: checks limits, streams the reply, saves messages, records usage
+- `assistants/index.ts`: the list of assistants. Each key is the web address. Instructions are imported as text (see the `*.md` rule in `next.config.ts`) and never sent to the browser.
+- `app/api/chat/route.ts`: counts the message against the limits, streams the reply, saves messages. Admin messages are not counted.
 - `app/api/upload/route.ts`: issues upload tokens for private Blob (admin only)
 - `lib/knowledge.ts`: reads files (text as-is, PDFs through the chat model), chunks, embeds, and runs hybrid search (vector + keyword, RRF, then rerank)
 - `lib/file-types.ts`: allowed file types
 - `lib/limits.ts`, `lib/chats.ts`: daily limits, chat storage
 - `lib/auth.ts`: `getUser()` (sends signed-out people to sign-in) and `requireAdmin()`. Every new page, route, or server action must call one of them.
-- `lib/db/schema.ts`: database tables. After a change, run `pnpm db:generate`. Migrations run automatically on each Vercel build.
+- `lib/db/schema.ts`: database tables. After a change, run `pnpm db:generate` (files land in `drizzle/`; don't hand-edit them). Migrations run automatically on each Vercel build.
+- `components/ui/`, `components/ai-elements/`, `hooks/`: copied-in library code (shadcn, AI Elements). Don't hand-edit or "fix" lint inside them.
 - `proxy.ts`: connects Clerk to every request
 
 <!-- BEGIN:nextjs-agent-rules -->
