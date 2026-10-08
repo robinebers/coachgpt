@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { getAssistant } from "@/assistants";
+import { assistants, getAssistant } from "@/assistants";
 import { maxInstructionsLength } from "@/assistants/types";
 import { createAccount, isAdminEmail, requireAdmin, setPassword } from "@/lib/auth";
 import { assistantInstructions, db, documents, user } from "@/lib/db";
@@ -39,27 +39,29 @@ export async function deleteDocument(documentId: string) {
   revalidatePath("/admin");
 }
 
+// Forms send line breaks as \r\n, which would count twice against the limit.
+const normalized = (text: string) => text.replaceAll("\r\n", "\n").trim();
+
 export async function saveInstructions(assistantSlug: string, formData: FormData) {
   await requireAdmin();
-  // Forms send line breaks as \r\n, which would count twice against the limit.
-  const instructions = String(formData.get("instructions")).replaceAll("\r\n", "\n").trim();
-  if (!getAssistant(assistantSlug)) return { error: "This assistant doesn't exist." };
+  const assistant = getAssistant(assistantSlug);
+  if (!assistant) return { error: "This assistant doesn't exist." };
+  const instructions = normalized(String(formData.get("instructions")));
   if (!instructions) return { error: "Instructions can't be empty." };
   if (instructions.length > maxInstructionsLength) {
     return { error: `Instructions can be up to ${maxInstructionsLength.toLocaleString("en-US")} characters.` };
   }
-  await db
-    .insert(assistantInstructions)
-    .values({ assistantSlug, instructions })
-    .onConflictDoUpdate({ target: assistantInstructions.assistantSlug, set: { instructions, updatedAt: new Date() } });
+  // Text that matches instructions.md isn't saved, so later edits to the file still apply.
+  if (instructions === normalized(assistants[assistant.slug].instructions)) {
+    await db.delete(assistantInstructions).where(eq(assistantInstructions.assistantSlug, assistant.slug));
+  } else {
+    await db
+      .insert(assistantInstructions)
+      .values({ assistantSlug: assistant.slug, instructions })
+      .onConflictDoUpdate({ target: assistantInstructions.assistantSlug, set: { instructions, updatedAt: new Date() } });
+  }
   revalidatePath("/admin");
   return {};
-}
-
-export async function resetInstructions(assistantSlug: string) {
-  await requireAdmin();
-  await db.delete(assistantInstructions).where(eq(assistantInstructions.assistantSlug, assistantSlug));
-  revalidatePath("/admin");
 }
 
 export async function saveClient(userId: string | undefined, formData: FormData) {

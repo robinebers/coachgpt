@@ -49,13 +49,17 @@ export async function POST(request: Request) {
       title: titleFrom(message),
     });
   }
-  const allMessages = [...(chat ? await getMessages(chat.id) : []), message];
+  const [history, instructions] = await Promise.all([
+    chat ? getMessages(chat.id) : [],
+    getInstructions(assistant.slug),
+  ]);
+  const allMessages = [...history, message];
   await saveMessage(body.id, message);
 
   const result = streamText({
     model: coachConfig.models.chat,
     reasoning: coachConfig.models.thinking,
-    system: `${(await getInstructions(assistant.slug)).text}\n\n${knowledgeRules}`,
+    system: `${instructions}\n\n${knowledgeRules}`,
     messages: pruneMessages({
       messages: await convertToModelMessages(allMessages),
       reasoning: "all",

@@ -7,5 +7,5 @@ export async function getInstructions(slug: AssistantSlug) {
     .select({ text: assistantInstructions.instructions })
     .from(assistantInstructions)
     .where(eq(assistantInstructions.assistantSlug, slug));
-  return saved ? { text: saved.text, edited: true } : { text: assistants[slug].instructions, edited: false };
+  return saved?.text ?? assistants[slug].instructions;
 }

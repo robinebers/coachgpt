@@ -15,11 +15,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { resetInstructions, saveInstructions } from "./actions";
+import { saveInstructions } from "./actions";
 
 type Props = {
   assistant: { slug: string; name: string };
-  instructions: { text: string; edited: boolean };
+  instructions: { text: string; original: string };
 };
 
 function SaveButton() {
@@ -66,16 +66,8 @@ function InstructionsForm({ assistant, instructions, onDone }: Props & { onDone:
       </div>
       {error && <p className="text-destructive text-sm">{error}</p>}
       <DialogFooter>
-        {instructions.edited && (
-          <Button
-            type="button"
-            variant="ghost"
-            className="sm:mr-auto"
-            onClick={async () => {
-              await resetInstructions(assistant.slug);
-              onDone();
-            }}
-          >
+        {text !== instructions.original && (
+          <Button type="button" variant="ghost" className="sm:mr-auto" onClick={() => setText(instructions.original)}>
             Use the original
           </Button>
         )}

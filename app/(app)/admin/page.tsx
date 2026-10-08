@@ -1,9 +1,8 @@
 import { desc } from "drizzle-orm";
-import { type AssistantSlug, assistants } from "@/assistants";
+import { assistants } from "@/assistants";
 import { Card } from "@/components/ui/card";
 import { isAdminEmail, requireAdmin } from "@/lib/auth";
-import { db, documents, user } from "@/lib/db";
-import { getInstructions } from "@/lib/instructions";
+import { assistantInstructions, db, documents, user } from "@/lib/db";
 import { AutoRefresh } from "./auto-refresh";
 import { AddClientButton, ClientRow } from "./clients";
 import { AssistantFiles } from "./files";
@@ -11,11 +10,10 @@ import { InstructionsButton } from "./instructions";
 
 export default async function AdminPage() {
   await requireAdmin();
-  const slugs = Object.keys(assistants) as AssistantSlug[];
-  const [files, people, instructions] = await Promise.all([
+  const [files, people, savedInstructions] = await Promise.all([
     db.select().from(documents).orderBy(desc(documents.createdAt)),
     db.select().from(user).orderBy(user.name),
-    Promise.all(slugs.map(getInstructions)),
+    db.select().from(assistantInstructions),
   ]);
 
   return (
@@ -48,19 +46,24 @@ export default async function AdminPage() {
             through the assistant.
           </p>
         </div>
-        {slugs.map((slug, i) => {
-          const assistant = assistants[slug];
-          return (
-            <AssistantFiles
-              key={slug}
-              assistant={{ slug, name: assistant.name, description: assistant.description }}
-              files={files
-                .filter((file) => file.assistantSlug === slug)
-                .map(({ id, name, status, error }) => ({ id, name, status, error }))}
-              action={<InstructionsButton assistant={{ slug, name: assistant.name }} instructions={instructions[i]} />}
-            />
-          );
-        })}
+        {Object.entries(assistants).map(([slug, assistant]) => (
+          <AssistantFiles
+            key={slug}
+            assistant={{ slug, name: assistant.name, description: assistant.description }}
+            files={files
+              .filter((file) => file.assistantSlug === slug)
+              .map(({ id, name, status, error }) => ({ id, name, status, error }))}
+            action={
+              <InstructionsButton
+                assistant={{ slug, name: assistant.name }}
+                instructions={{
+                  text: savedInstructions.find((row) => row.assistantSlug === slug)?.instructions ?? assistant.instructions,
+                  original: assistant.instructions,
+                }}
+              />
+            }
+          />
+        ))}
       </section>
     </main>
   );
