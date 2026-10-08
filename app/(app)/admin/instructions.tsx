@@ -4,6 +4,7 @@ import { ScrollTextIcon } from "lucide-react";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { maxInstructionsLength } from "@/assistants/types";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,7 +20,7 @@ import { saveInstructions } from "./actions";
 
 type Props = {
   assistant: { slug: string; name: string };
-  instructions: { text: string; original: string };
+  instructions?: string;
 };
 
 function SaveButton() {
@@ -32,7 +33,7 @@ function SaveButton() {
 }
 
 function InstructionsForm({ assistant, instructions, onDone }: Props & { onDone: () => void }) {
-  const [text, setText] = useState(instructions.text);
+  const [text, setText] = useState(instructions ?? "");
   const [error, setError] = useState<string>();
 
   async function save(formData: FormData) {
@@ -53,6 +54,7 @@ function InstructionsForm({ assistant, instructions, onDone }: Props & { onDone:
         <Textarea
           name="instructions"
           aria-label="Instructions"
+          placeholder="Paste the instructions from your GPT's Configure tab, or write new ones."
           value={text}
           onChange={(event) => setText(event.target.value)}
           maxLength={maxInstructionsLength}
@@ -66,11 +68,6 @@ function InstructionsForm({ assistant, instructions, onDone }: Props & { onDone:
       </div>
       {error && <p className="text-destructive text-sm">{error}</p>}
       <DialogFooter>
-        {text !== instructions.original && (
-          <Button type="button" variant="ghost" className="sm:mr-auto" onClick={() => setText(instructions.original)}>
-            Use the original
-          </Button>
-        )}
         <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
         <SaveButton />
       </DialogFooter>
@@ -82,6 +79,7 @@ export function InstructionsButton(props: Props) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {!props.instructions && <Badge variant="outline">No instructions</Badge>}
       <Button variant="outline" onClick={() => setOpen(true)}>
         <ScrollTextIcon data-icon="inline-start" />
         Instructions

@@ -100,15 +100,15 @@ Do this once per GPT. In ChatGPT, they open **Explore GPTs → My GPTs**, click 
 | In ChatGPT | In this app |
 | --- | --- |
 | Name, Description, Conversation starters | `name`, `description`, `starters` in `assistants/<slug>/assistant.ts` |
-| Instructions | all of `assistants/<slug>/instructions.md` |
+| Instructions | pasted into the **Instructions** dialog on `/admin` after the update is live |
 | Knowledge files | uploaded on `/admin` after the update is live |
 
 1. Pick a slug: the GPT's name in small letters with dashes, like `sales-coach`. It becomes the web address (`/sales-coach`) and can't change later.
 2. Copy `assistants/example-coach/` to `assistants/<slug>/`.
-3. They paste each field into the chat. Instructions are their work, not a secret, so pasting is fine. Keep them word for word. If they rely on things this app doesn't have (web browsing, images, code, Actions, naming source files), tell them those parts won't work.
+3. They paste the name, description and starters into the chat. If their instructions rely on things this app doesn't have (web browsing, images, code, Actions, naming source files), tell them those parts won't work.
 4. In `assistants/index.ts`, import it and add it with the slug as its key (`"sales-coach": salesCoach`). Remove the example coach if it's not needed, and delete its folder.
 5. Ship it as in "Shipping a change" in AGENTS.md.
-6. They upload the knowledge files on `/admin`.
+6. On `/admin`, they click **Instructions** on the new assistant, paste the GPT's instructions word for word, and click **Save**. Until then the card says **No instructions**. Then they upload the knowledge files.
 
 **Check:** they open the new assistant, its files show **ready** on `/admin`, and a question about their material gets a sensible answer.
 

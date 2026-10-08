@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   const result = streamText({
     model: coachConfig.models.chat,
     reasoning: coachConfig.models.thinking,
-    system: `${instructions}\n\n${knowledgeRules}`,
+    system: instructions ? `${instructions}\n\n${knowledgeRules}` : knowledgeRules,
     messages: pruneMessages({
       messages: await convertToModelMessages(allMessages),
       reasoning: "all",

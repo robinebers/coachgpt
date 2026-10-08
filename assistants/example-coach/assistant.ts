@@ -1,8 +1,6 @@
 import type { Assistant } from "../types";
-import instructions from "./instructions.md";
 
 export default {
-  instructions,
   name: "Example Coach",
   description: "Helps clients set goals and plan their week.",
   starters: [

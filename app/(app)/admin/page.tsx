@@ -56,10 +56,7 @@ export default async function AdminPage() {
             action={
               <InstructionsButton
                 assistant={{ slug, name: assistant.name }}
-                instructions={{
-                  text: savedInstructions.find((row) => row.assistantSlug === slug)?.instructions ?? assistant.instructions,
-                  original: assistant.instructions,
-                }}
+                instructions={savedInstructions.find((row) => row.assistantSlug === slug)?.instructions}
               />
             }
           />

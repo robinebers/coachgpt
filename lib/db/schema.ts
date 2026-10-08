@@ -63,7 +63,7 @@ export const documents = pgTable(
   },
 );
 
-// Instructions a coach saved on /admin. Without a row, the assistant's instructions.md applies.
+// Instructions a coach saved on /admin. Without a row, the assistant has none.
 export const assistantInstructions = pgTable("assistant_instructions", {
   assistantSlug: text("assistant_slug").primaryKey(),
   instructions: text("instructions").notNull(),

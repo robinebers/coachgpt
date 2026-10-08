@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { assistants, getAssistant } from "@/assistants";
+import { getAssistant } from "@/assistants";
 import { maxInstructionsLength } from "@/assistants/types";
 import { createAccount, isAdminEmail, requireAdmin, setPassword } from "@/lib/auth";
 import { assistantInstructions, db, documents, user } from "@/lib/db";
@@ -51,15 +51,10 @@ export async function saveInstructions(assistantSlug: string, formData: FormData
   if (instructions.length > maxInstructionsLength) {
     return { error: `Instructions can be up to ${maxInstructionsLength.toLocaleString("en-US")} characters.` };
   }
-  // Text that matches instructions.md isn't saved, so later edits to the file still apply.
-  if (instructions === normalized(assistants[assistant.slug].instructions)) {
-    await db.delete(assistantInstructions).where(eq(assistantInstructions.assistantSlug, assistant.slug));
-  } else {
-    await db
-      .insert(assistantInstructions)
-      .values({ assistantSlug: assistant.slug, instructions })
-      .onConflictDoUpdate({ target: assistantInstructions.assistantSlug, set: { instructions, updatedAt: new Date() } });
-  }
+  await db
+    .insert(assistantInstructions)
+    .values({ assistantSlug: assistant.slug, instructions })
+    .onConflictDoUpdate({ target: assistantInstructions.assistantSlug, set: { instructions, updatedAt: new Date() } });
   revalidatePath("/admin");
   return {};
 }

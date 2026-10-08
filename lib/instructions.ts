@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { type AssistantSlug, assistants } from "@/assistants";
+import type { AssistantSlug } from "@/assistants";
 import { assistantInstructions, db } from "@/lib/db";
 
 export async function getInstructions(slug: AssistantSlug) {
@@ -7,5 +7,5 @@ export async function getInstructions(slug: AssistantSlug) {
     .select({ text: assistantInstructions.instructions })
     .from(assistantInstructions)
     .where(eq(assistantInstructions.assistantSlug, slug));
-  return saved?.text ?? assistants[slug].instructions;
+  return saved?.text;
 }
