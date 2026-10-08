@@ -58,6 +58,7 @@ export async function processDocument(document: typeof documents.$inferSelect, b
       .set({ status: "ready", error: null })
       .where(eq(documents.id, document.id));
   } catch (error) {
+    await db.delete(chunks).where(eq(chunks.documentId, document.id));
     await db
       .update(documents)
       .set({ status: "failed", error: (error as Error).message })
@@ -81,14 +82,14 @@ export async function searchKnowledge(assistantSlug: string, query: string) {
       .select(columns)
       .from(chunks)
       .innerJoin(documents, eq(chunks.documentId, documents.id))
-      .where(eq(documents.assistantSlug, assistantSlug))
+      .where(and(eq(documents.assistantSlug, assistantSlug), eq(documents.status, "ready")))
       .orderBy(cosineDistance(chunks.embedding, embedding))
       .limit(candidatesPerSearch),
     db
       .select(columns)
       .from(chunks)
       .innerJoin(documents, eq(chunks.documentId, documents.id))
-      .where(and(eq(documents.assistantSlug, assistantSlug), sql`${chunks.search} @@ ${keywordQuery}`))
+      .where(and(eq(documents.assistantSlug, assistantSlug), eq(documents.status, "ready"), sql`${chunks.search} @@ ${keywordQuery}`))
       .orderBy(desc(sql`ts_rank(${chunks.search}, ${keywordQuery})`))
       .limit(candidatesPerSearch),
   ]);

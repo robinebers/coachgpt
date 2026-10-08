@@ -4,6 +4,7 @@ import {
   createUIMessageStreamResponse,
   generateId,
   isStepCount,
+  pruneMessages,
   streamText,
   tool,
   toUIMessageStream,
@@ -54,7 +55,11 @@ export async function POST(request: Request) {
     model: coachConfig.models.chat,
     reasoning: coachConfig.models.thinking,
     system: `${assistants[assistant.slug].instructions}\n\n${knowledgeRules}`,
-    messages: await convertToModelMessages(allMessages),
+    messages: pruneMessages({
+      messages: await convertToModelMessages(allMessages),
+      reasoning: "all",
+      toolCalls: "all",
+    }),
     tools: {
       searchKnowledge: tool({
         description:
