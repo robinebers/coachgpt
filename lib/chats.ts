@@ -1,21 +1,33 @@
 import type { UIMessage } from "ai";
-import { and, asc, desc, eq } from "drizzle-orm";
-import { chats, db, messages } from "@/lib/db";
+import { asc, desc, eq, getTableColumns } from "drizzle-orm";
+import { chats, db, messages, user } from "@/lib/db";
+
+export type ChatAccess = "owner" | "reader";
+
+export function chatAccess(
+  chat: { userId: string },
+  viewer: { id: string; isAdmin: boolean },
+): ChatAccess | null {
+  if (chat.userId === viewer.id) return "owner";
+  if (viewer.isAdmin) return "reader";
+  return null;
+}
 
 export async function listChats(userId: string) {
   return db
-    .select({ id: chats.id, title: chats.title, assistantSlug: chats.assistantSlug })
+    .select({ id: chats.id, title: chats.title, assistantSlug: chats.assistantSlug, updatedAt: chats.updatedAt })
     .from(chats)
     .where(eq(chats.userId, userId))
     .orderBy(desc(chats.updatedAt))
     .limit(100);
 }
 
-export async function getChat(chatId: string, userId: string) {
+export async function getChat(chatId: string) {
   const [chat] = await db
-    .select()
+    .select({ ...getTableColumns(chats), ownerName: user.name })
     .from(chats)
-    .where(and(eq(chats.id, chatId), eq(chats.userId, userId)));
+    .innerJoin(user, eq(chats.userId, user.id))
+    .where(eq(chats.id, chatId));
   return chat ?? null;
 }
 

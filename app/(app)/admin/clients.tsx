@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckIcon, CopyIcon, MoreHorizontalIcon } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -170,36 +171,40 @@ export function ClientRow({ client }: { client: Client }) {
     !next && setOpen((current) => (current === which ? undefined : current));
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <div className="min-w-0 flex-1">
+    <div className="relative flex items-center gap-3 px-4 py-3 hover:bg-muted/50">
+      <Link href={`/admin/clients/${client.id}`} className="min-w-0 flex-1 after:absolute after:inset-0">
         <div className="flex items-center gap-2 font-medium">
           <span className="truncate">{client.name}</span>
           {client.isAdmin && <Badge variant="secondary">Admin</Badge>}
         </div>
         <div className="truncate text-muted-foreground">{client.email}</div>
-      </div>
+      </Link>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={`Actions for ${client.name}`} />}>
-          <MoreHorizontalIcon />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem
-            onClick={() => {
-              setSignIn(undefined);
-              setOpen("edit");
-            }}
+      <div className="relative z-10">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={<Button variant="ghost" size="icon-sm" aria-label={`Actions for ${client.name}`} />}
           >
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpen("reset")}>Reset password</DropdownMenuItem>
-          {!client.isAdmin && (
-            <DropdownMenuItem variant="destructive" onClick={() => setOpen("remove")}>
-              Remove
+            <MoreHorizontalIcon />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem
+              onClick={() => {
+                setSignIn(undefined);
+                setOpen("edit");
+              }}
+            >
+              Edit
             </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <DropdownMenuItem onClick={() => setOpen("reset")}>Reset password</DropdownMenuItem>
+            {!client.isAdmin && (
+              <DropdownMenuItem variant="destructive" onClick={() => setOpen("remove")}>
+                Remove
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <Dialog open={open === "edit" || open === "details"} onOpenChange={(next) => !next && close()}>
         <DialogContent>
