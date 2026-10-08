@@ -22,6 +22,13 @@
       "when": 1791443930752,
       "tag": "0002_rich_zzzax",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791450775251,
+      "tag": "0003_assistant-instructions",
+      "breakpoints": true
     }
   ]
 }

@@ -4,3 +4,6 @@ export type Assistant = {
   starters: string[];
   instructions: string;
 };
+
+// The same limit as ChatGPT's GPT editor.
+export const maxInstructionsLength = 8000;

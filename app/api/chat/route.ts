@@ -12,11 +12,12 @@ import {
   type UIMessageChunk,
 } from "ai";
 import { z } from "zod";
-import { assistants, getAssistant } from "@/assistants";
+import { getAssistant } from "@/assistants";
 import { coachConfig } from "@/coach.config";
 import { getUser } from "@/lib/auth";
 import { getChatFor, getMessages, saveMessage, titleFrom } from "@/lib/chats";
 import { chats, db } from "@/lib/db";
+import { getInstructions } from "@/lib/instructions";
 import { searchKnowledge } from "@/lib/knowledge";
 import { countMessage } from "@/lib/limits";
 
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
   const result = streamText({
     model: coachConfig.models.chat,
     reasoning: coachConfig.models.thinking,
-    system: `${assistants[assistant.slug].instructions}\n\n${knowledgeRules}`,
+    system: `${(await getInstructions(assistant.slug)).text}\n\n${knowledgeRules}`,
     messages: pruneMessages({
       messages: await convertToModelMessages(allMessages),
       reasoning: "all",

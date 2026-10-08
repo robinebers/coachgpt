@@ -4,7 +4,7 @@ export const assistants = {
   "example-coach": exampleCoach,
 };
 
-type AssistantSlug = keyof typeof assistants;
+export type AssistantSlug = keyof typeof assistants;
 
 // Everything except the instructions, which stay on the server.
 export function getAssistant(slug: string) {

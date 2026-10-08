@@ -21,6 +21,7 @@ You are helping a coach or consultant run this app: their own private version of
 ## Common requests
 
 - **Add an assistant / move a GPT over:** follow "Move a custom GPT over" in [SETUP.md](SETUP.md).
+- **Instructions:** the coach can edit them with **Instructions** on `/admin`. Saved edits win over `instructions.md`, so changing the file does nothing until they click **Use the original**.
 - **Clients:** add, edit, reset a password, read chats, or remove one on `/admin`. Removing a client deletes their chats.
 - **Admins:** add or remove the email in `adminEmails`. A new admin with no account signs in as soon as the update is live: the first password they type (15+ characters) becomes theirs. Someone who already has an account keeps their password. A removed admin becomes a client; once the update is live, click **Remove** on `/admin` to lock them out.
 - **Monthly AI budget:** `vercel ai-gateway budgets set project <project> --limit <dollars>`, then check it with `vercel ai-gateway budgets inspect project <project>`.
