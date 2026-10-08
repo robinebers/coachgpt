@@ -1,8 +1,10 @@
-import { LogOutIcon, MessageSquarePlusIcon, SettingsIcon } from "lucide-react";
+import { MessageSquarePlusIcon, SettingsIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { signOut } from "@/app/sign-in/actions";
 import { assistants } from "@/assistants";
 import { coachConfig } from "@/coach.config";
+import { ChatItem, NavLink } from "@/components/nav-links";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -20,14 +22,19 @@ import { listChats } from "@/lib/chats";
 
 export async function AppSidebar() {
   const user = await getUser();
-  const chats = await listChats(user.id);
+  const chats = (await listChats(user.id)).filter((chat) => chat.assistantSlug in assistants);
 
   return (
     <Sidebar>
       <SidebarHeader>
-        <Link href="/" className="px-2 py-1 font-semibold">
-          {coachConfig.appName}
-        </Link>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" render={<Link href="/" />}>
+              <Image src="/logo.svg" alt="" width={32} height={32} className="rounded-lg" />
+              <span className="truncate font-semibold">{coachConfig.appName}</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -36,47 +43,40 @@ export async function AppSidebar() {
             <SidebarMenu>
               {Object.entries(assistants).map(([slug, assistant]) => (
                 <SidebarMenuItem key={slug}>
-                  <SidebarMenuButton render={<Link href={`/${slug}`} />}>
+                  <NavLink href={`/${slug}`}>
                     <MessageSquarePlusIcon />
                     <span>{assistant.name}</span>
-                  </SidebarMenuButton>
+                  </NavLink>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Chats</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {chats.filter((chat) => chat.assistantSlug in assistants).map((chat) => (
-                <SidebarMenuItem key={chat.id}>
-                  <SidebarMenuButton render={<Link href={`/${chat.assistantSlug}/${chat.id}`} />}>
-                    <span>{chat.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {chats.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Chats</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {chats.map((chat) => (
+                  <ChatItem key={chat.id} chat={chat} />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
           {user.isAdmin && (
             <SidebarMenuItem>
-              <SidebarMenuButton render={<Link href="/admin" />}>
+              <NavLink href="/admin">
                 <SettingsIcon />
                 <span>Admin</span>
-              </SidebarMenuButton>
+              </NavLink>
             </SidebarMenuItem>
           )}
           <SidebarMenuItem>
-            <form action={signOut}>
-              <SidebarMenuButton type="submit">
-                <LogOutIcon />
-                <span>Sign out ({user.name})</span>
-              </SidebarMenuButton>
-            </form>
+            <NavUser name={user.name} email={user.email} />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

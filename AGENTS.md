@@ -16,7 +16,7 @@ You are helping a coach or consultant set up and run this app. It is their own p
 - Each **assistant** is like one custom GPT. It has a name, a short description, conversation starters, instructions, and knowledge files.
 - **Clients** sign in with an email and a password the coach gives them. Only people the coach adds can get in. The app sends no emails: if a client forgets their password, the coach makes a new one on `/admin`.
 - The **admin page** (`/admin`) is where the coach uploads knowledge files, adds and edits clients, and resets passwords. Only emails in `adminEmails` in `coach.config.ts` can open it.
-- It runs on **Vercel**, with **Neon** (database, which also keeps the logins), **Vercel Blob** (file storage), and **Vercel AI Gateway** (the AI).
+- It runs on **Vercel**, with **Neon** (database, which also keeps the logins and the knowledge) and **Vercel AI Gateway** (the AI).
 
 ## Setup checklist
 
@@ -46,8 +46,6 @@ pnpm install
 vercel link --yes
 vercel git connect --yes
 vercel install neon --plan free_v3
-vercel storage create my-coaching-assistant-files --type blob --access private
-vercel storage connect my-coaching-assistant-files --add-rw-token --yes
 vercel ai-gateway budgets set project my-coaching-assistant --limit <their budget>
 vercel env pull .env.local
 ```
@@ -104,7 +102,7 @@ Tell them plainly:
 - **ChatGPT doesn't let you download knowledge files.** They need the original files from their computer, Google Drive, or wherever they first made them.
 - Supported files: `.pdf`, `.txt`, `.md`, `.srt`, `.vtt`.
 - After upload, a file shows "reading…" for a little while, then "ready". If it shows "failed", hover over it to see why.
-- Very long PDFs (a whole book) may fail. Split them into smaller files.
+- Each file can be up to 4 MB. Very long PDFs (a whole book) may fail even when smaller. Split big files into smaller ones.
 - GPT extras like web browsing, image making, code running, and Actions are not part of this app.
 
 ## Models
@@ -126,16 +124,17 @@ Change a model only if they ask for it. Before you change it:
 | "Take away someone's admin" | remove their email from `adminEmails`. They become a normal client. To lock them out too, the coach clicks **Remove** on `/admin` after the update. |
 | "Let people send more messages" | `messagesPerClientPerDay` in `coach.config.ts` |
 | "Change the monthly AI budget" | `vercel ai-gateway budgets set project my-coaching-assistant --limit <dollars>` |
-| "Allow bigger files" | `knowledge.maxFileSizeMB` in `coach.config.ts` |
+| "Allow bigger files" | not possible: Vercel caps uploads at 4.5 MB. They split the file into smaller ones. |
 | "Change how the assistant talks" | `assistants/<slug>/instructions.md` |
 | "Change the starter buttons" / "the description" | `assistants/<slug>/assistant.ts` |
 | "Add an assistant" | follow "Move a custom GPT over" |
 | "Add a client" | they do it on the `/admin` page. They get a password to send the client. |
-| "A client forgot their password" | they click **Reset password** on `/admin` and send the new one. The old one stops working right away. |
-| "Change a client's name or email" | they edit the row on `/admin` and click **Save**. |
-| "Remove a client" | they click **Remove** on `/admin`. That client's chats are deleted too. |
+| "A client forgot their password" | on `/admin`, they click **⋯** on the client's row, then **Reset password**, and send the new one. The old one stops working right away. |
+| "Change a client's name or email" | on `/admin`, **⋯** then **Edit**. |
+| "Remove a client" | on `/admin`, **⋯** then **Remove**. That client's chats are deleted too. |
 | "Send 'forgot password' emails" | not built in. It needs an email sender: their Gmail with an app password (no website needed), or Resend from the Vercel Marketplace (needs their own website address and DNS records). Then use `sendResetPassword` in `lib/auth.ts` with a link you build from its `token` (there's no `/api/auth` route), plus a reset page whose server action calls `auth.api.resetPassword`. |
 | "Change colors" | the CSS variables in `app/globals.css` |
+| "Use my logo" | replace `public/logo.svg` (sidebar and sign-in page) and `app/icon.svg` (browser tab icon: keep it simple and bold, it shows at 16 pixels). Square images. For a `.png`, save `public/logo.png` and update `src="/logo.svg"` in `components/app-sidebar.tsx` and `app/sign-in/page.tsx`, or save `app/icon.png` and delete `app/icon.svg`. |
 | "Change the sidebar" | `components/app-sidebar.tsx` |
 | "Change the chat screen" | `components/chat.tsx` |
 
@@ -164,15 +163,15 @@ Then open http://localhost:3000.
 
 ## Engine room (for you, not for them)
 
-- `app/(app)/`: the one sidebar layout, the home page (assistant picker), the chat pages, and `admin/` (upload, file status, clients, plus server actions)
+- `app/(app)/`: the one sidebar layout, the home page (assistant picker), the chat pages, `actions.ts` (delete a chat), and `admin/` (`files.tsx`, `clients.tsx`, server actions in `actions.ts`). New passwords show once in a dialog with copy buttons, never in a toast.
+- `components/app-sidebar.tsx`, `nav-links.tsx`, `nav-user.tsx`: the sidebar, its links and chat "⋯" menu, and the account menu. `confirm-dialog.tsx`: the "are you sure?" dialog.
 - `app/sign-in/`: the sign-in page. While there are no accounts at all, it shows the coach's first-time screen. An admin's first sign-in creates their account (`actions.ts`).
 - `assistants/index.ts`: the list of assistants. Each key is the web address. Instructions are imported as text (see the `*.md` rule in `next.config.ts`) and never sent to the browser.
 - `app/api/chat/route.ts`: counts the message against the limits, streams the reply, saves messages. Admin messages are not counted.
-- `app/api/upload/route.ts`: issues upload tokens for private Blob (admin only)
-- `lib/knowledge.ts`: reads files (text as-is, PDFs through the chat model), chunks, embeds, and runs hybrid search (vector + keyword, RRF, then rerank)
-- `lib/file-types.ts`: allowed file types
+- `lib/knowledge.ts`: reads uploaded files right away (text as-is, PDFs through the chat model), chunks, embeds, and runs hybrid search (vector + keyword, RRF, then rerank). The original files are not kept.
+- `lib/file-types.ts`: allowed file types and the 4 MB size limit (also the server action body limit in `next.config.ts`)
 - `lib/limits.ts`, `lib/chats.ts`: daily limits, chat storage
-- `lib/auth.ts`: Better Auth with email + password. Sign-up is off, and there is no `/api/auth` route on purpose: accounts are only made by `createAccount()` (from `addClient` or an admin's first sign-in). Admin means "email is in `adminEmails`", checked on every request. Its secret is `DATABASE_URL`, so there's no secret to set up. The "Base URL is not set" warning is expected; leave it. Also `getUser()` (sends signed-out people to sign-in) and `requireAdmin()`. Every new page, route, or server action must call one of them.
+- `lib/auth.ts`: Better Auth with email + password. Sign-up is off, and there is no `/api/auth` route on purpose: accounts are only made by `createAccount()` (from `saveClient` or an admin's first sign-in). Admin means "email is in `adminEmails`", checked on every request. Its secret is `DATABASE_URL`, so there's no secret to set up. The "Base URL is not set" warning is expected; leave it. Also `getUser()` (sends signed-out people to sign-in) and `requireAdmin()`. Every new page, route, or server action must call one of them.
 - `lib/db/schema.ts`: database tables. Better Auth's tables (`user`, `session`, `account`, `verification`) are generated into `lib/db/auth-schema.ts`. After a change, run `pnpm db:generate` (files land in `drizzle/`; don't hand-edit them). Migrations run automatically on each Vercel build.
 - `components/ui/`, `components/ai-elements/`, `hooks/`: copied-in library code (shadcn, AI Elements). Don't hand-edit or "fix" lint inside them.
 

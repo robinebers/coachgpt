@@ -4,9 +4,6 @@ export const coachConfig: CoachConfig = {
   // Placeholder. Replace with the coach's email during setup, or anyone can claim admin with it.
   adminEmails: ["test@replace.me"],
   messagesPerClientPerDay: 50,
-  knowledge: {
-    maxFileSizeMB: 25,
-  },
   models: {
     chat: "openai/gpt-6.1-sol",
     thinking: "medium",
@@ -20,7 +17,6 @@ type CoachConfig = {
   tagline: string;
   adminEmails: string[];
   messagesPerClientPerDay: number;
-  knowledge: { maxFileSizeMB: number };
   models: {
     chat: string;
     thinking: "low" | "medium" | "high";

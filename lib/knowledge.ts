@@ -1,5 +1,4 @@
 import { embed, embedMany, gateway, generateText, rerank } from "ai";
-import { get } from "@vercel/blob";
 import { and, cosineDistance, desc, eq, sql } from "drizzle-orm";
 import { coachConfig } from "@/coach.config";
 import { chunks, db, documents } from "@/lib/db";
@@ -50,12 +49,8 @@ function splitIntoChunks(text: string) {
   return pieces;
 }
 
-export async function processDocument(document: typeof documents.$inferSelect) {
+export async function processDocument(document: typeof documents.$inferSelect, bytes: Uint8Array) {
   try {
-    const blob = await get(document.blobPathname, { access: "private" });
-    if (blob?.statusCode !== 200) throw new Error("The uploaded file is missing from storage.");
-    const bytes = new Uint8Array(await new Response(blob.stream).arrayBuffer());
-
     const pieces = splitIntoChunks(await readFileText(document.name, bytes));
     if (pieces.length === 0) throw new Error("No text was found in this file.");
 

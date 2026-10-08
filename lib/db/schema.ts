@@ -57,7 +57,6 @@ export const documents = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     assistantSlug: text("assistant_slug").notNull(),
     name: text("name").notNull(),
-    blobPathname: text("blob_pathname").notNull(),
     status: text("status").$type<"processing" | "ready" | "failed">().notNull(),
     error: text("error"),
     createdAt: timestamp("created_at").defaultNow().notNull(),

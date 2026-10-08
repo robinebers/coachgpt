@@ -42,7 +42,7 @@ export async function getUser() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/sign-in");
   const { id, name, email } = session.user;
-  return { id, name, isAdmin: isAdminEmail(email) };
+  return { id, name, email, isAdmin: isAdminEmail(email) };
 }
 
 export async function requireAdmin() {

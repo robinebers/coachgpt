@@ -1,38 +1,43 @@
 "use server";
 
 import { randomBytes } from "node:crypto";
-import { del } from "@vercel/blob";
 import { and, eq, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { getAssistant } from "@/assistants";
-import { createAccount, requireAdmin, setPassword } from "@/lib/auth";
+import { createAccount, isAdminEmail, requireAdmin, setPassword } from "@/lib/auth";
 import { db, documents, user } from "@/lib/db";
+import { isAllowedFile, maxFileSizeMB } from "@/lib/file-types";
 import { processDocument } from "@/lib/knowledge";
 
 const newPassword = () => randomBytes(9).toString("base64url");
 
-export async function addDocument(assistantSlug: string, name: string, blobPathname: string) {
+// Errors are returned, not thrown, because Next.js hides thrown messages in production.
+export async function addDocument(assistantSlug: string, formData: FormData) {
   await requireAdmin();
-  if (!getAssistant(assistantSlug) || !blobPathname.startsWith(`knowledge/${assistantSlug}/`)) {
-    throw new Error("Unknown assistant");
+  const file = formData.get("file");
+  if (!(file instanceof File) || !getAssistant(assistantSlug) || !isAllowedFile(file.name)) {
+    return { error: "This file type can't be added." };
   }
+  if (file.size > maxFileSizeMB * 1024 * 1024) {
+    return { error: `Files can be up to ${maxFileSizeMB} MB. Split it into smaller files.` };
+  }
+  const bytes = new Uint8Array(await file.arrayBuffer());
   const [document] = await db
     .insert(documents)
-    .values({ assistantSlug, name, blobPathname, status: "processing" })
+    .values({ assistantSlug, name: file.name, status: "processing" })
     .returning();
-  after(() => processDocument(document));
+  after(() => processDocument(document, bytes));
   revalidatePath("/admin");
+  return {};
 }
 
 export async function deleteDocument(documentId: string) {
   await requireAdmin();
-  const [document] = await db.delete(documents).where(eq(documents.id, documentId)).returning();
-  if (document) await del(document.blobPathname);
+  await db.delete(documents).where(eq(documents.id, documentId));
   revalidatePath("/admin");
 }
 
-// Errors are returned, not thrown, because Next.js hides thrown messages in production.
 export async function saveClient(userId: string | undefined, formData: FormData) {
   await requireAdmin();
   const name = String(formData.get("name"));
@@ -42,6 +47,10 @@ export async function saveClient(userId: string | undefined, formData: FormData)
   }
   let password: string | undefined;
   if (userId) {
+    const [current] = await db.select({ email: user.email }).from(user).where(eq(user.id, userId));
+    if (current && isAdminEmail(current.email) && current.email !== email) {
+      return { error: "Admin emails can only be changed in the app's settings." };
+    }
     await db.update(user).set({ name, email }).where(eq(user.id, userId));
   } else {
     password = newPassword();
@@ -60,6 +69,8 @@ export async function resetPassword(userId: string) {
 
 export async function removeClient(userId: string) {
   await requireAdmin();
+  const [removed] = await db.select({ email: user.email }).from(user).where(eq(user.id, userId));
+  if (!removed || isAdminEmail(removed.email)) return;
   await db.delete(user).where(eq(user.id, userId));
   revalidatePath("/admin");
 }

@@ -12,7 +12,7 @@ What you get:
 - **Invite-only login.** You add each client and get a password to send them. Nobody else can get in.
 - **Limits.** A daily message limit for each client, plus a monthly budget for the whole app, so your costs never surprise you.
 - **Saved chats.** Clients can come back to past conversations in the sidebar.
-- **Smart search.** The assistant finds the right part of your knowledge files. Supports `.pdf`, `.txt`, `.md`, `.srt`, and `.vtt`.
+- **Smart search.** The assistant finds the right part of your knowledge files. Supports `.pdf`, `.txt`, `.md`, `.srt`, and `.vtt`, up to 4 MB each.
 
 ## The easy way to set it up
 
@@ -25,18 +25,18 @@ What you get:
 
 3. Your AI reads the setup guide and walks you through each step.
 
-You need free [GitHub](https://github.com/signup) and [Vercel](https://vercel.com/signup) accounts, with their command-line tools installed (the homework video shows how). Your AI does the rest, including the database and file storage.
+You need free [GitHub](https://github.com/signup) and [Vercel](https://vercel.com/signup) accounts, with their command-line tools installed (the homework video shows how). Your AI does the rest, including the database.
 
 📺 **Video walkthrough:** coming soon.
 
 ## What it costs
 
-- Vercel, Neon, and Blob all have free plans that are enough to start.
+- Vercel and Neon both have free plans that are enough to start.
 - The AI is paid through Vercel AI Gateway, per message. You set a monthly budget during setup, so you can't overspend.
 
 ## For developers
 
-Next.js 16, AI SDK 7 through Vercel AI Gateway, Neon Postgres with pgvector and Drizzle, Better Auth, Vercel Blob, shadcn/ui, and AI Elements. Search is hybrid (vector + keyword, merged with reciprocal rank fusion) and then reranked. See [AGENTS.md](AGENTS.md) for the file map.
+Next.js 16, AI SDK 7 through Vercel AI Gateway, Neon Postgres with pgvector and Drizzle, Better Auth, shadcn/ui, and AI Elements. Search is hybrid (vector + keyword, merged with reciprocal rank fusion) and then reranked. See [AGENTS.md](AGENTS.md) for the file map.
 
 ## License
 

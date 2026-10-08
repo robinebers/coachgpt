@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { connection } from "next/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { db, user } from "@/lib/db";
@@ -12,6 +13,7 @@ export default async function SignInPage() {
     <main className="flex flex-1 items-center justify-center p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
+          <Image src="/logo.svg" alt="" width={40} height={40} className="mb-2 rounded-lg" />
           <CardTitle>{firstTime ? "Welcome! Pick your password" : "Sign in"}</CardTitle>
           <CardDescription>
             {firstTime

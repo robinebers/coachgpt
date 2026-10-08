@@ -3,7 +3,6 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import {
   Conversation,
   ConversationContent,
@@ -11,9 +10,16 @@ import {
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+import {
+  PromptInput,
+  PromptInputBody,
+  PromptInputFooter,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputTools,
+} from "@/components/ai-elements/prompt-input";
 import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 
 type ChatProps = {
   id: string;
@@ -23,7 +29,6 @@ type ChatProps = {
 
 export function Chat({ id, assistant, initialMessages }: ChatProps) {
   const router = useRouter();
-  const [input, setInput] = useState("");
   const { messages, sendMessage, status, stop, error } = useChat({
     id,
     messages: initialMessages,
@@ -42,7 +47,6 @@ export function Chat({ id, assistant, initialMessages }: ChatProps) {
     if (!text.trim() || busy) return;
     if (messages.length === 0) window.history.replaceState(null, "", `/${assistant.slug}/${id}`);
     void sendMessage({ text });
-    setInput("");
   }
 
   return (
@@ -50,19 +54,7 @@ export function Chat({ id, assistant, initialMessages }: ChatProps) {
       <Conversation className="flex-1">
         <ConversationContent>
           {messages.length === 0 ? (
-            <ConversationEmptyState>
-              <div className="flex flex-col items-center gap-3">
-                <h2 className="font-medium text-lg">{assistant.name}</h2>
-                <p className="text-muted-foreground text-sm">{assistant.description}</p>
-                <div className="mt-2 flex flex-wrap justify-center gap-2">
-                  {assistant.starters.map((starter) => (
-                    <Button key={starter} variant="outline" size="sm" onClick={() => send(starter)}>
-                      {starter}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </ConversationEmptyState>
+            <ConversationEmptyState title={assistant.name} description={assistant.description} />
           ) : (
             messages.map((message) => <ChatMessage key={message.id} message={message} />)
           )}
@@ -71,35 +63,24 @@ export function Chat({ id, assistant, initialMessages }: ChatProps) {
         <ConversationScrollButton />
       </Conversation>
 
-      <form
-        className="mt-4 flex items-end gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          send(input);
-        }}
-      >
-        <Textarea
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
-              event.preventDefault();
-              send(input);
-            }
-          }}
-          placeholder={`Message ${assistant.name}`}
-          className="max-h-48"
-        />
-        {busy ? (
-          <Button type="button" variant="outline" onClick={stop}>
-            Stop
-          </Button>
-        ) : (
-          <Button type="submit" disabled={!input.trim()}>
-            Send
-          </Button>
+      <div className="flex flex-col gap-3">
+        {messages.length === 0 && (
+          <Suggestions>
+            {assistant.starters.map((starter) => (
+              <Suggestion key={starter} suggestion={starter} onClick={send} />
+            ))}
+          </Suggestions>
         )}
-      </form>
+        <PromptInput onSubmit={({ text }) => send(text)}>
+          <PromptInputBody>
+            <PromptInputTextarea placeholder={`Message ${assistant.name}`} />
+          </PromptInputBody>
+          <PromptInputFooter>
+            <PromptInputTools />
+            <PromptInputSubmit status={status} onStop={stop} />
+          </PromptInputFooter>
+        </PromptInput>
+      </div>
     </div>
   );
 }
