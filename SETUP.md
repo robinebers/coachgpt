@@ -6,7 +6,7 @@ A step is done only when its **Check** passes. A file existing is not proof. If 
 
 ## Picking up where they left off
 
-If they started before, run the checks below in order. Start from the first step whose check fails.
+If they started before, first find their copy: a `my-coaching-assistant` folder, or `gh repo clone my-coaching-assistant`. Work inside it. Then run the checks below in order, and start from the first step whose check fails. For step 2, read their answers back from `coach.config.ts` and `vercel ai-gateway budgets inspect`.
 
 ## 1. Tools
 
@@ -44,21 +44,19 @@ The first time Neon is added, a page may open to accept its terms. They click **
 
 ## 4. Set their details and deploy
 
-In `coach.config.ts`, replace `test@replace.me` in `adminEmails` with their email, and set `appName` and `messagesPerClientPerDay`. Never push with `test@replace.me` still there. Run `pnpm typecheck`, then commit and push to `main`.
+In `coach.config.ts`, replace `test@replace.me` in `adminEmails` with their email, and set `appName` and `messagesPerClientPerDay`. Then ship it as in "Shipping a change" in AGENTS.md.
 
-**Check:** `vercel ls` shows a new deployment. Run `vercel inspect <its url> --wait` until it says **Ready** (about two minutes). If it fails, read `vercel inspect <its url> --logs`, fix it, and push again. Then note the app's main address from the `Aliases` list.
+**Check:**
 
-## 5. Add AI credits
+- `coach.config.ts` no longer contains `test@replace.me`, and `git status` shows nothing left to push.
+- `vercel inspect <newest deployment url> --wait` says **Ready**.
+- Note the app's address: the `my-coaching-assistant….vercel.app` one under `Aliases` without `-git-` in it. Always open the app at this address, because client invites copy whatever address the coach has open.
 
-Open the Vercel dashboard for them. They go to **AI Gateway** and add credits. The app can't answer anything without them.
+## 5. First sign-in
 
-**Check:** step 6 ends with a real answer from the AI.
+Do this as soon as step 4 is Ready. Until they sign in, anyone who knows their email could pick the password first.
 
-## 6. First sign-in
-
-Do this right after step 4 is Ready. Until they sign in, anyone who knows their email could pick the password first.
-
-Open their live app. It shows **Welcome! Pick your password**.
+Open their app at the address from step 4. It shows **Welcome! Pick your password**.
 
 1. They type the email from step 2.
 2. They let their browser suggest a strong password (at least 15 characters) and save it. That password is now theirs.
@@ -67,16 +65,20 @@ Open their live app. It shows **Welcome! Pick your password**.
 **Check:** ask them to:
 
 - sign out, then sign back in with the saved password,
-- open **Admin** and see their own email in the list, marked **Admin**,
-- send one message to the example assistant and get a reply.
+- open **Admin** and see their own email in the list, marked **Admin**.
 
 If it goes wrong:
 
-- **"That's not the email this app was set up with":** a typo. Fix `adminEmails`, push, wait for Ready, try again.
+- **"That's not the email this app was set up with":** a typo. Fix `adminEmails`, ship it, try again.
 - **It says "Sign in", not "Welcome":** they already picked a password. Their browser may have saved it.
 - **Signed in, but the password wasn't saved:** on `/admin`, they click **⋯** on their own row, then **Reset password**, save the new one, and sign in again.
-- **No reply from the AI:** check the credits from step 5, and the budget check from step 3.
 - **They can't get in at all:** delete their row from the `user` table (a one-off query using `.env.local`). Their own chats go too. Then redo this step right away.
+
+## 6. Add AI credits
+
+Open the Vercel dashboard for them. They go to **AI Gateway** and add credits. The app can't answer anything without them.
+
+**Check:** they send one message to the example assistant and get a reply. If not, check the credits, then the budget check from step 3.
 
 ## Move a custom GPT over
 

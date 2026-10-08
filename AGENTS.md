@@ -22,11 +22,11 @@ You are helping a coach or consultant run this app: their own private version of
 
 - **Add an assistant / move a GPT over:** follow "Move a custom GPT over" in [SETUP.md](SETUP.md).
 - **Clients:** add, edit, reset a password, read chats, or remove one on `/admin`. Removing a client deletes their chats.
-- **Admins:** add or remove the email in `adminEmails`. A new admin signs in as soon as the update is live: the first password typed for that email becomes theirs. A removed admin becomes a client; click **Remove** on `/admin` to lock them out.
+- **Admins:** add or remove the email in `adminEmails`. A new admin with no account signs in as soon as the update is live: the first password they type (15+ characters) becomes theirs. Someone who already has an account keeps their password. A removed admin becomes a client; once the update is live, click **Remove** on `/admin` to lock them out.
 - **Monthly AI budget:** `vercel ai-gateway budgets set project <project> --limit <dollars>`, then check it with `vercel ai-gateway budgets inspect project <project>`.
 - **Models:** already picked. Don't offer a menu. Change one only when asked, and check the ID at https://ai-gateway.vercel.sh/v1/models first. The embedding model must make 1024-number vectors; changing it means uploading every file again.
 - **Quoting or naming files:** `knowledgeRules` in `app/api/chat/route.ts` asks the AI to use the files in its own words and not quote or name them. That's a request to the AI, not a lock. Raw search results never reach the browser.
-- **Bigger files:** not possible (Vercel caps uploads at 4.5 MB). Split the file. For anything else, read the code; it's small.
+- **Bigger files:** not possible (Vercel caps uploads at 4.5 MB). Split the file.
 
 ## Rules
 
@@ -35,9 +35,9 @@ You are helping a coach or consultant run this app: their own private version of
 - Tell coaches plainly: **only upload material you're OK with clients seeing through the assistant.**
 - Never change an assistant's slug (its folder name and key in `assistants/index.ts`) once clients use it: chats and files are tied to it. To rename, change `name` only.
 - To delete an assistant, delete its files on `/admin` **first**, then remove the code.
-- Never put `test@replace.me` (or any address the coach doesn't own) in `adminEmails`.
+- Never push with `test@replace.me` (or any address the coach doesn't own) in `adminEmails`: anyone could claim admin with it.
 - No provider API keys. The AI runs through Vercel AI Gateway. Locally, the token from `vercel env pull` lasts about 12 hours; pull again if AI calls fail.
-- Every new page, route, or server action must call `getUser()` or `requireAdmin()` from `lib/auth.ts`.
+- Every new page, route, or server action must call `getUser()` or `requireAdmin()` from `lib/auth.ts`. Don't add an `/api/auth` route. Keep tool results and assistant instructions out of the browser.
 - After a schema change in `lib/db/schema.ts`, run `pnpm db:generate`. Migrations run on every Vercel build.
 - Don't edit `components/ui/`, `components/ai-elements/`, or `hooks/` (copied library code).
 
