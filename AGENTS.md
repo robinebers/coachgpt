@@ -12,7 +12,7 @@ You are helping a coach or consultant run this app: their own private version of
 
 ## What this app is
 
-- Each **assistant** is one custom GPT: name, description, starters (`assistants/<slug>/assistant.ts`), instructions (`assistants/<slug>/instructions.md`), and knowledge files (uploaded on `/admin`).
+- Each **assistant** is one custom GPT: name, description, starters (`assistants/<slug>/assistant.ts`), instructions (`assistants/<slug>/instructions.md`, unless saved on `/admin`), and knowledge files (uploaded on `/admin`).
 - **Clients** sign in with an email and a password the coach makes on `/admin`. The app sends no emails.
 - **Admins** are the emails in `adminEmails` in `coach.config.ts`. They can open `/admin` to manage files and clients, and read every chat. Only a chat's owner can reply in it.
 - App settings (name, tagline, daily message limit, models) are in `coach.config.ts`.
@@ -21,7 +21,7 @@ You are helping a coach or consultant run this app: their own private version of
 ## Common requests
 
 - **Add an assistant / move a GPT over:** follow "Move a custom GPT over" in [SETUP.md](SETUP.md).
-- **Instructions:** the coach can edit them with **Instructions** on `/admin`. Saved edits win over `instructions.md`, so changing the file does nothing until they click **Use the original** and **Save** there.
+- **Instructions:** instructions saved on `/admin` (the **Instructions** button) win over `instructions.md`. Once the coach has saved some there, editing the file changes nothing. Edit them on `/admin` instead, or click **Use the original** and **Save** there to go back to the file.
 - **Clients:** add, edit, reset a password, read chats, or remove one on `/admin`. Removing a client deletes their chats.
 - **Admins:** add or remove the email in `adminEmails`. A new admin with no account signs in as soon as the update is live: the first password they type (15+ characters) becomes theirs. Someone who already has an account keeps their password. A removed admin becomes a client; once the update is live, click **Remove** on `/admin` to lock them out.
 - **Monthly AI budget:** `vercel ai-gateway budgets set project <project> --limit <dollars>`, then check it with `vercel ai-gateway budgets inspect project <project>`.
