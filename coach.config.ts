@@ -13,13 +13,6 @@ export const coachConfig: CoachConfig = {
   // One short sentence under the name on the home page.
   tagline: "Pick an assistant to start chatting.",
 
-  // The email addresses of the people who run this app (usually just you).
-  // These people can upload knowledge files, add clients, and have no daily limit.
-  // Take an email off this list and that person is a normal client again.
-  // The first time you sign in, the password you type becomes your password (16+ characters).
-  // Example: adminEmails: ["you@gmail.com"],
-  adminEmails: [],
-
   limits: {
     // How many messages ONE client can send in one day.
     messagesPerPersonPerDay: 50,
@@ -64,7 +57,6 @@ export const coachConfig: CoachConfig = {
 type CoachConfig = {
   appName: string;
   tagline: string;
-  adminEmails: string[];
   limits: { messagesPerPersonPerDay: number; messagesTotalPerDay: number };
   knowledge: { maxFileSizeMB: number };
   models: {

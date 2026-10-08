@@ -3,7 +3,6 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { coachConfig } from "@/coach.config";
 import { db } from "@/lib/db";
 
 export const auth = betterAuth({
@@ -16,7 +15,8 @@ export const auth = betterAuth({
   plugins: [nextCookies()],
 });
 
-const adminEmails = coachConfig.adminEmails.map((email) => email.toLowerCase());
+// Typed in when the app was deployed. More than one admin? Separate the emails with commas.
+const adminEmails = process.env.ADMIN_EMAILS!.toLowerCase().split(",").map((email) => email.trim());
 export const isAdminEmail = (email: string) => adminEmails.includes(email);
 
 // Sign-up is off, so this is the only way accounts get made.

@@ -11,13 +11,14 @@ export async function signIn(_: string | null, formData: FormData) {
   const password = String(formData.get("password"));
   // An admin's first sign-in creates their account with the password they typed.
   if (isAdminEmail(email) && !(await db.$count(user, eq(user.email, email)))) {
-    if (password.length < 16) return "Pick a password with at least 16 characters.";
+    // 15, because that's the length of the passwords Chrome suggests.
+    if (password.length < 15) return "Pick a password with at least 15 characters.";
     await createAccount(email, email.split("@")[0], password);
   }
   try {
     await auth.api.signInEmail({ body: { email, password } });
   } catch {
-    return "Wrong email or password.";
+    return (await db.$count(user)) ? "Wrong email or password." : "That's not the email this app was set up with.";
   }
   redirect("/");
 }
