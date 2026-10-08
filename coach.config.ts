@@ -6,7 +6,7 @@
 //  Vercel will update your live app in about a minute.
 // ============================================================
 
-export const coachConfig = {
+export const coachConfig: CoachConfig = {
   // Your app's name. People see it in the browser tab and at the top of the sidebar.
   appName: "My Coaching Assistant",
 
@@ -14,9 +14,11 @@ export const coachConfig = {
   tagline: "Pick an assistant to start chatting.",
 
   // The email addresses of the people who run this app (usually just you).
-  // These people can upload knowledge files, invite clients, and have no daily limit.
-  // Use the same email you log in with. Use small letters.
-  adminEmails: ["you@example.com"],
+  // These people can upload knowledge files, add clients, and have no daily limit.
+  // Take an email off this list and that person is a normal client again.
+  // The first time you sign in, the password you type becomes your password (16+ characters).
+  // Example: adminEmails: ["you@gmail.com"],
+  adminEmails: [],
 
   limits: {
     // How many messages ONE client can send in one day.
@@ -53,7 +55,7 @@ export const coachConfig = {
     // Picks the best matches from your knowledge files for each question.
     reranker: "voyage/rerank-3",
   },
-} as const satisfies CoachConfig;
+};
 
 // ------------------------------------------------------------
 //  You don't need to change anything below this line.
@@ -62,7 +64,7 @@ export const coachConfig = {
 type CoachConfig = {
   appName: string;
   tagline: string;
-  adminEmails: readonly string[];
+  adminEmails: string[];
   limits: { messagesPerPersonPerDay: number; messagesTotalPerDay: number };
   knowledge: { maxFileSizeMB: number };
   models: {

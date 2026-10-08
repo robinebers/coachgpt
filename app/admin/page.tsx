@@ -5,20 +5,21 @@ import { coachConfig } from "@/coach.config";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireAdmin } from "@/lib/auth";
-import { db, documents } from "@/lib/db";
+import { isAdminEmail, requireAdmin } from "@/lib/auth";
+import { db, documents, user } from "@/lib/db";
 import { allowedExtensions } from "@/lib/file-types";
 import { getUsageToday } from "@/lib/limits";
 import { deleteDocument } from "./actions";
 import { AutoRefresh } from "./auto-refresh";
-import { InviteForm } from "./invite-form";
+import { AddClientForm, RemoveButton, ResetPasswordButton } from "./clients";
 import { UploadFiles } from "./upload-files";
 
 export default async function AdminPage() {
   await requireAdmin();
-  const [files, usageToday] = await Promise.all([
+  const [files, usageToday, people] = await Promise.all([
     db.select().from(documents).orderBy(desc(documents.createdAt)),
     getUsageToday(),
+    db.select().from(user).orderBy(user.name),
   ]);
 
   return (
@@ -33,11 +34,22 @@ export default async function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Invite someone</CardTitle>
-          <CardDescription>Only people you invite can sign in.</CardDescription>
+          <CardTitle>Clients</CardTitle>
+          <CardDescription>Only people you add here can sign in. You get a password to send them.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <InviteForm />
+        <CardContent className="flex flex-col gap-4">
+          <AddClientForm />
+          <div className="flex flex-col divide-y">
+            {people.map((person) => (
+              <div key={person.id} className="flex items-center gap-3 py-2 text-sm">
+                <span className="flex-1 truncate">
+                  {person.name} <span className="text-muted-foreground">{person.email}</span>
+                </span>
+                <ResetPasswordButton userId={person.id} email={person.email} />
+                {!isAdminEmail(person.email) && <RemoveButton userId={person.id} email={person.email} />}
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 

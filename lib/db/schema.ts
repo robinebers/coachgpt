@@ -12,6 +12,11 @@ import {
   vector,
 } from "drizzle-orm/pg-core";
 import type { UIMessage } from "ai";
+import { user } from "./auth-schema";
+
+// Login tables, made by Better Auth's CLI. Don't hand-edit them. After adding a Better Auth plugin, run:
+// npx auth@latest generate --config lib/auth.ts --output lib/db/auth-schema.ts
+export * from "./auth-schema";
 
 const tsvector = customType<{ data: string }>({
   dataType: () => "tsvector",
@@ -21,7 +26,9 @@ export const chats = pgTable(
   "chats",
   {
     id: text("id").primaryKey(),
-    userId: text("user_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
     assistantSlug: text("assistant_slug").notNull(),
     title: text("title").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -79,7 +86,9 @@ export const chunks = pgTable(
 export const usage = pgTable(
   "usage",
   {
-    userId: text("user_id").notNull(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
     day: text("day").notNull(),
     messages: integer("messages").notNull().default(0),
   },

@@ -14,9 +14,9 @@ You are helping a coach or consultant set up and run this app. It is their own p
 ## What this app is
 
 - Each **assistant** is like one custom GPT. It has a name, a short description, conversation starters, instructions, and knowledge files.
-- **Clients** sign in with a code sent to their email. Only people the coach invites can get in.
-- The **admin page** (`/admin`) is where the coach uploads knowledge files, invites clients, and sees today's usage. Only emails in `adminEmails` can open it.
-- It runs on **Vercel**, with **Neon** (database), **Clerk** (login), **Vercel Blob** (file storage), and **Vercel AI Gateway** (the AI).
+- **Clients** sign in with an email and a password the coach gives them. Only people the coach adds can get in. The app sends no emails: if a client forgets their password, the coach makes a new one on `/admin`.
+- The **admin page** (`/admin`) is where the coach uploads knowledge files, adds clients, resets passwords, and sees today's usage. Only emails in `adminEmails` can open it.
+- It runs on **Vercel**, with **Neon** (database, which also keeps the logins), **Vercel Blob** (file storage), and **Vercel AI Gateway** (the AI).
 
 ## Setup checklist
 
@@ -25,7 +25,7 @@ Work out which steps are already done, and pick up from there. Ways to check:
 - `vercel whoami` works → they have a Vercel account and are logged in.
 - `.vercel/project.json` exists → this folder is linked to their Vercel project.
 - `git remote -v` points to their own GitHub repo (not `robinebers/coachgpt`) → they have their own copy.
-- `adminEmails` in `coach.config.ts` is still `you@example.com` → step 3 isn't done.
+- `adminEmails` in `coach.config.ts` is still empty → step 3 isn't done.
 
 ### 1. Make a Vercel account
 
@@ -33,9 +33,9 @@ Send them to https://vercel.com/signup. Tell them to sign up with GitHub. That's
 
 ### 2. Make their own copy with the Deploy button
 
-Give them this link. It copies the app into their GitHub, creates the Vercel project, and adds Neon, Clerk, and Blob in one go:
+Give them this link. It copies the app into their GitHub, creates the Vercel project, and adds Neon and Blob in one go:
 
-https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Frobinebers%2Fcoachgpt&project-name=my-coaching-assistant&repository-name=my-coaching-assistant&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%7D%2C%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22clerk%22%2C%22productSlug%22%3A%22clerk%22%2C%22protocol%22%3A%22authentication%22%7D%2C%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22private%22%7D%5D
+https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Frobinebers%2Fcoachgpt&project-name=my-coaching-assistant&repository-name=my-coaching-assistant&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%7D%2C%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22private%22%7D%5D
 
 Tell them:
 
@@ -55,16 +55,17 @@ vercel env pull .env.local
 
 ### 3. Make them the admin
 
-Ask for the email they will log in with. Put it in `adminEmails` in `coach.config.ts`, in small letters. While you're there, ask what to call the app (`appName`). Then commit and push. Vercel updates the live app in about a minute.
+Ask for the email they want to sign in with. Put it in `adminEmails` in `coach.config.ts`. While you're there, ask what to call the app (`appName`). Then commit and push. Vercel updates the live app in about a minute.
 
-### 4. Set up login in Clerk
+### 4. First login
 
-Clerk is the login service. They need to change two settings and invite themselves. Walk them through it:
+Do this right after step 3, so nobody else can claim that email first.
 
-1. In the Vercel dashboard, open their project. Click **Integrations**, then **Clerk**, then **Open in Clerk**.
-2. Go to **Configure → User & authentication**. Turn on **Email** with **Email verification code**. Turn off **Password**. Turn off every social login (like Google).
-3. Go to **Configure → Restrictions**. Set **Sign-up mode** to **Restricted**. Now only invited people can join.
-4. Go to **Users → Invite**. Invite their own email.
+1. Open their live app. The address is in the Vercel dashboard (or run `vercel ls`).
+2. They sign in with the email from step 3. **The password they type the first time becomes their password.** It must be at least 16 characters. Tell them to let their password manager make one, or to use a short sentence.
+3. They should see the home page, plus an **Admin** link at the bottom of the sidebar. If Admin is missing, the email doesn't match `adminEmails`.
+
+If they mistyped their password that first time, they're still signed in. They click **Reset password** on their own row in `/admin`, save the new password, and sign in again with it. If they can't sign in at all, delete their row from the `user` table (a one-off query with `.env.local` pulled; their own chats go too). Then they sign in again and pick a new one.
 
 ### 5. Set a spending limit
 
@@ -74,12 +75,6 @@ Every AI message costs a tiny bit of money, paid through Vercel AI Gateway. A bu
 2. Add credits. Set a monthly budget they're comfortable with.
 
 The daily limits in `coach.config.ts` protect them too. The budget is the real safety net.
-
-### 6. First login
-
-1. They open the invite email from step 4 and click the link.
-2. They sign in with the code sent to their email.
-3. They should see the home page, plus an **Admin** link at the bottom of the sidebar. If Admin is missing, the email in `adminEmails` doesn't match the email they used.
 
 Next: move their GPTs over.
 
@@ -128,14 +123,17 @@ Change a model only if they ask for it. Before you change it:
 | They say… | You change… |
 | --- | --- |
 | "Change the app name" / "the text on the home page" | `appName` / `tagline` in `coach.config.ts` |
-| "Make someone else an admin" | `adminEmails` in `coach.config.ts` |
+| "Make someone else an admin" | add their email to `adminEmails` in `coach.config.ts`. If they have no account yet, they sign in right after the update to pick their password. |
+| "Take away someone's admin" | remove their email from `adminEmails`. They become a normal client. To lock them out too, the coach clicks **Remove** on `/admin` after the update. |
 | "Let people send more messages" | `limits` in `coach.config.ts` |
 | "Allow bigger files" | `knowledge.maxFileSizeMB` in `coach.config.ts` |
 | "Change how the assistant talks" | `assistants/<slug>/instructions.md` |
 | "Change the starter buttons" / "the description" | `assistants/<slug>/assistant.ts` |
 | "Add an assistant" | follow "Move a custom GPT over" |
-| "Invite a client" | they do it on the `/admin` page |
-| "Remove a client" | Clerk dashboard → Users → delete |
+| "Add a client" | they do it on the `/admin` page. They get a password to send the client. |
+| "A client forgot their password" | they click **Reset password** on `/admin` and send the new one. The old one stops working right away. |
+| "Remove a client" | they click **Remove** on `/admin`. That client's chats are deleted too. |
+| "Send 'forgot password' emails" | not built in. It needs an email sender: their Gmail with an app password (no website needed), or Resend from the Vercel Marketplace (needs their own website address and DNS records). Then use `sendResetPassword` in `lib/auth.ts` with a link you build from its `token` (there's no `/api/auth` route), plus a reset page whose server action calls `auth.api.resetPassword`. |
 | "Change colors" | the CSS variables in `app/globals.css` |
 | "Change the sidebar" | `components/app-sidebar.tsx` |
 | "Change the chat screen" | `components/chat.tsx` |
@@ -165,17 +163,17 @@ Then open http://localhost:3000.
 ## Engine room (for you, not for them)
 
 - `app/(chat)/`: the sidebar layout, the home page (assistant picker), and the chat pages
-- `app/admin/`: upload, file status, invites, today's usage, plus server actions
+- `app/admin/`: upload, file status, clients (add, reset password, remove), today's usage, plus server actions
+- `app/sign-in/`: the sign-in page. An admin's first sign-in creates their account (`actions.ts`).
 - `assistants/index.ts`: the list of assistants. Each key is the web address. Instructions are imported as text (see the `*.md` rule in `next.config.ts`) and never sent to the browser.
 - `app/api/chat/route.ts`: counts the message against the limits, streams the reply, saves messages. Admin messages are not counted.
 - `app/api/upload/route.ts`: issues upload tokens for private Blob (admin only)
 - `lib/knowledge.ts`: reads files (text as-is, PDFs through the chat model), chunks, embeds, and runs hybrid search (vector + keyword, RRF, then rerank)
 - `lib/file-types.ts`: allowed file types
 - `lib/limits.ts`, `lib/chats.ts`: daily limits, chat storage
-- `lib/auth.ts`: `getUser()` (sends signed-out people to sign-in) and `requireAdmin()`. Every new page, route, or server action must call one of them.
-- `lib/db/schema.ts`: database tables. After a change, run `pnpm db:generate` (files land in `drizzle/`; don't hand-edit them). Migrations run automatically on each Vercel build.
+- `lib/auth.ts`: Better Auth with email + password. Sign-up is off, and there is no `/api/auth` route on purpose: accounts are only made by `createAccount()` (from `addClient` or an admin's first sign-in). Admin means "email is in `adminEmails`", checked on every request. Its secret is `DATABASE_URL`, so there's no extra env var. The "Base URL is not set" warning is expected; leave it. Also `getUser()` (sends signed-out people to sign-in) and `requireAdmin()`. Every new page, route, or server action must call one of them.
+- `lib/db/schema.ts`: database tables. Better Auth's tables (`user`, `session`, `account`, `verification`) are generated into `lib/db/auth-schema.ts`. After a change, run `pnpm db:generate` (files land in `drizzle/`; don't hand-edit them). Migrations run automatically on each Vercel build.
 - `components/ui/`, `components/ai-elements/`, `hooks/`: copied-in library code (shadcn, AI Elements). Don't hand-edit or "fix" lint inside them.
-- `proxy.ts`: connects Clerk to every request
 
 <!-- BEGIN:nextjs-agent-rules -->
 

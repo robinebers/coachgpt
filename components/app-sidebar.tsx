@@ -1,6 +1,6 @@
-import { UserButton } from "@clerk/nextjs";
-import { MessageSquarePlusIcon, SettingsIcon } from "lucide-react";
+import { LogOutIcon, MessageSquarePlusIcon, SettingsIcon } from "lucide-react";
 import Link from "next/link";
+import { signOut } from "@/app/sign-in/actions";
 import { assistants } from "@/assistants";
 import { coachConfig } from "@/coach.config";
 import {
@@ -70,8 +70,13 @@ export async function AppSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}
-          <SidebarMenuItem className="px-2 py-1">
-            <UserButton />
+          <SidebarMenuItem>
+            <form action={signOut}>
+              <SidebarMenuButton type="submit">
+                <LogOutIcon />
+                <span>Sign out ({user.name})</span>
+              </SidebarMenuButton>
+            </form>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
