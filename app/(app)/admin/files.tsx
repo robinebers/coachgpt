@@ -1,7 +1,7 @@
 "use client";
 
 import { FileTextIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { type DragEvent, type ReactNode, useState } from "react";
 import { type FileRejection, useDropzone } from "react-dropzone";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -29,9 +29,14 @@ type ServerFile = {
 type PendingUpload = { id: string; name: string } & ({ state: "uploading" } | { state: "failed"; error: string });
 
 function rejectionMessage(errors: FileRejection["errors"]) {
-  if (errors.some((error) => error.code === "file-invalid-type")) return wrongTypeMessage;
-  if (errors.some((error) => error.code === "file-too-large")) return tooLargeMessage;
-  return errors[0]?.message ?? wrongTypeMessage;
+  return errors.some((error) => error.code === "file-too-large") ? tooLargeMessage : wrongTypeMessage;
+}
+
+// Dialogs render in a portal, but React still bubbles their drag events up to the card.
+function ignoreDragsFromPortals(event: DragEvent<HTMLElement>) {
+  if (event.currentTarget.contains(event.target as Node)) return;
+  event.stopPropagation();
+  if (event.dataTransfer.types.includes("Files")) event.preventDefault();
 }
 
 export function DeleteFileButton({ id, name }: { id: string; name: string }) {
@@ -95,7 +100,9 @@ function FileRow({
         <FileTextIcon />
       </ItemMedia>
       <ItemContent className="min-w-0">
-        <ItemTitle className="w-full">{name}</ItemTitle>
+        <ItemTitle className="w-full">
+          <span className="truncate">{name}</span>
+        </ItemTitle>
       </ItemContent>
       <ItemActions className="shrink-0">
         <FileStatus status={status} error={error} />
@@ -116,8 +123,8 @@ export function AssistantFiles({
 }) {
   const [pending, setPending] = useState<PendingUpload[]>([]);
 
-  function fail(id: string, name: string, error: string) {
-    setPending((current) => current.map((item) => (item.id === id ? { id, name, state: "failed", error } : item)));
+  function fail(id: string, error: string) {
+    setPending((current) => current.map((item) => (item.id === id ? { ...item, state: "failed", error } : item)));
   }
 
   async function upload(file: File, id: string) {
@@ -126,46 +133,39 @@ export function AssistantFiles({
       formData.append("file", file);
       const { error } = await addDocument(assistant.slug, formData);
       if (error) {
-        fail(id, file.name, error);
+        fail(id, error);
         return;
       }
       setPending((current) => current.filter((item) => item.id !== id));
     } catch (caught) {
-      fail(id, file.name, caught instanceof Error ? caught.message : "This file couldn't be added.");
+      fail(id, caught instanceof Error ? caught.message : "This file couldn't be added.");
     }
   }
 
   function onDrop(acceptedFiles: File[], fileRejections: FileRejection[]) {
-    const uploads = acceptedFiles.filter((file) => isAllowedFile(file.name)).map((file) => ({
-      file,
-      row: { id: crypto.randomUUID(), name: file.name, state: "uploading" as const },
-    }));
-    const failed: PendingUpload[] = [
-      ...acceptedFiles
-        .filter((file) => !isAllowedFile(file.name))
-        .map((file) => ({
-          id: crypto.randomUUID(),
-          name: file.name,
-          state: "failed" as const,
-          error: wrongTypeMessage,
-        })),
+    const uploads = acceptedFiles.map((file) => ({ file, id: crypto.randomUUID() }));
+    setPending((current) => [
+      ...uploads.map(({ file, id }) => ({ id, name: file.name, state: "uploading" as const })),
       ...fileRejections.map(({ file, errors }) => ({
         id: crypto.randomUUID(),
         name: file.name,
         state: "failed" as const,
         error: rejectionMessage(errors),
       })),
-    ];
-    setPending((current) => [...uploads.map((item) => item.row), ...failed, ...current]);
-    void Promise.all(uploads.map((item) => upload(item.file, item.row.id)));
+      ...current,
+    ]);
+    for (const { file, id } of uploads) void upload(file, id);
   }
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     noClick: true,
     noKeyboard: true,
+    noPaste: true,
     multiple: true,
     accept: dropzoneAccept,
     maxSize: maxFileSizeMB * 1024 * 1024,
+    // accept also lets through any text/plain file, like .log or .csv.
+    validator: (file) => (isAllowedFile(file.name) ? null : { code: "file-invalid-type", message: wrongTypeMessage }),
     onDrop,
   });
   const hasRows = pending.length > 0 || files.length > 0;
@@ -173,13 +173,17 @@ export function AssistantFiles({
   return (
     <Card
       {...getRootProps({
+        onDragEnter: ignoreDragsFromPortals,
+        onDragOver: ignoreDragsFromPortals,
+        onDragLeave: ignoreDragsFromPortals,
+        onDrop: ignoreDragsFromPortals,
         className: cn(
           "relative",
           isDragActive && "overflow-visible ring-0 outline-2 outline-dashed outline-primary",
         ),
       })}
     >
-      <input {...getInputProps({ className: "absolute size-0 overflow-hidden" })} />
+      <input {...getInputProps({ className: "absolute" })} />
       <CardHeader>
         <CardTitle>{assistant.name}</CardTitle>
         <CardDescription>{assistant.description}</CardDescription>
