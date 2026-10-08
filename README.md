@@ -25,15 +25,9 @@ What you get:
 
 3. Your AI reads the setup guide and walks you through each step.
 
-You only need a free [Vercel](https://vercel.com/signup) account. Neon (database and logins) and Blob (file storage) are added for you.
+You need free [GitHub](https://github.com/signup) and [Vercel](https://vercel.com/signup) accounts, with their command-line tools installed (the homework video shows how). Your AI does the rest, including the database and file storage.
 
 📺 **Video walkthrough:** coming soon.
-
-## Deploy
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Frobinebers%2Fcoachgpt&project-name=my-coaching-assistant&repository-name=my-coaching-assistant&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%7D%2C%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22private%22%7D%5D&env=ADMIN_EMAILS&envDescription=Your%20email.%20You%20will%20use%20it%20to%20sign%20in%20as%20the%20admin.)
-
-It asks for your email. When your app is live, sign in with that email. The password you pick then becomes your password.
 
 ## What it costs
 

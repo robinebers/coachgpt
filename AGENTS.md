@@ -15,39 +15,53 @@ You are helping a coach or consultant set up and run this app. It is their own p
 
 - Each **assistant** is like one custom GPT. It has a name, a short description, conversation starters, instructions, and knowledge files.
 - **Clients** sign in with an email and a password the coach gives them. Only people the coach adds can get in. The app sends no emails: if a client forgets their password, the coach makes a new one on `/admin`.
-- The **admin page** (`/admin`) is where the coach uploads knowledge files, adds clients, resets passwords, and sees today's usage. Only admin emails can open it. Those are in `ADMIN_EMAILS` in Vercel, filled in on the Deploy screen.
+- The **admin page** (`/admin`) is where the coach uploads knowledge files, adds clients, resets passwords, and sees today's usage. Only emails in `adminEmails` in `coach.config.ts` can open it.
 - It runs on **Vercel**, with **Neon** (database, which also keeps the logins), **Vercel Blob** (file storage), and **Vercel AI Gateway** (the AI).
 
 ## Setup checklist
 
-Go in this order. You do all the technical work. They only click buttons, tell you their email, and pick a password.
+You run every step in the terminal. They only answer three questions, add AI credits, and pick a password. They already have the GitHub CLI (`gh`) and the Vercel CLI (`vercel`) from the homework video.
 
-Before every step, tell them in one sentence what will happen and what they'll see: a new page, a login, or a popup. Never send them anywhere without saying why first.
+Before anything opens in their browser, tell them in one sentence what it is and what to click.
 
-If they started before, ask how far they got. Clues: they know their app's web address (steps 1 and 2 are done). They can sign in and see **Admin** (step 3 is done). `.vercel/project.json` exists (step 5 is done).
+If they started before, ask how far they got. Clues: a `my-coaching-assistant` folder with `.vercel/project.json` means step 3 is done. If they can sign in and see **Admin**, step 5 is done.
 
-### 1. Make a Vercel account
+### 1. Check the tools
 
-Send them to https://vercel.com/signup. Tell them to click **Continue with GitHub**. No GitHub account yet? It helps them make one for free. Their app's code will live there.
+Run `gh auth status` and `vercel whoami`. If one isn't logged in, run `gh auth login --web` or `vercel login`. If `pnpm` is missing, run `npm install -g pnpm`.
 
-### 2. Put the app online
+### 2. Ask three things
 
-Ask which email they want to sign in with. Read it back to them, because a typo here locks them out.
+- The email they'll sign in with. Read it back, because a typo locks them out.
+- What to call the app.
+- A monthly AI budget. Suggest $100 a month, and use whatever they pick. Every message costs a tiny bit, and the budget is a hard stop.
 
-Give them this link, with `EMAIL` replaced by their email, URL-encoded (`@` becomes `%40`):
+### 3. Make their copy and put it online
 
-https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Frobinebers%2Fcoachgpt&project-name=my-coaching-assistant&repository-name=my-coaching-assistant&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%7D%2C%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22private%22%7D%5D&env=ADMIN_EMAILS&envDescription=Your%20email.%20You%20will%20use%20it%20to%20sign%20in%20as%20the%20admin.&envDefaults=%7B%22ADMIN_EMAILS%22%3A%22EMAIL%22%7D
+```bash
+gh repo create my-coaching-assistant --private --clone --template robinebers/coachgpt
+cd my-coaching-assistant
+pnpm install
+vercel link --yes
+vercel git connect --yes
+vercel install neon --plan free_v3
+vercel storage create my-coaching-assistant-files --type blob --access private
+vercel storage connect my-coaching-assistant-files --add-rw-token --yes
+vercel ai-gateway budgets set project my-coaching-assistant --limit <their budget>
+vercel env pull .env.local
+```
 
-First tell them what it does: it copies the app into their GitHub, adds a database and file storage, and puts the app online. Their email is already filled in. Then tell them:
+The first time Neon is added, a page may open to accept its terms. They click **Accept**.
 
-- Keep **Create private Git repository** checked. Their instructions are their work.
-- On each **Add** screen, pick the free plan and click through.
-- Don't change anything else.
-- It takes a few minutes. When it says **Congratulations**, they click the picture of their app. That opens their app. Ask them to paste its web address into the chat.
+Then replace `test@replace.me` in `adminEmails` with their email, and set `appName`, in `coach.config.ts`. Never push it with `test@replace.me` still there: anyone could sign in as admin with it. Commit and push. Vercel builds the app in about two minutes (`vercel ls` shows when it's Ready).
 
-### 3. First sign-in
+### 4. Add AI credits
 
-Do this right away. Their app shows **Welcome! Pick your password**.
+In the Vercel dashboard, they open **AI Gateway** and add credits. The budget from step 2 caps what gets spent. The daily limits in `coach.config.ts` help too.
+
+### 5. First sign-in
+
+Open their live app for them (`vercel inspect` on the newest deployment lists its address). It shows **Welcome! Pick your password**.
 
 1. They type the email from step 2.
 2. They let their browser suggest a strong password, and save it. That password is now theirs. It needs at least 15 characters.
@@ -55,35 +69,12 @@ Do this right away. Their app shows **Welcome! Pick your password**.
 
 If it goes wrong:
 
-- **"That's not the email this app was set up with"**: a typo in step 2. They open their project in Vercel, then **Settings** → **Environment Variables** → `ADMIN_EMAILS`, and fix it. Then **Deployments** → **⋯** on the top one → **Redeploy**. Wait for it, and try again.
+- **"That's not the email this app was set up with"**: a typo. Fix `adminEmails`, push, wait for the build, and try again.
 - **It says "Sign in", not "Welcome"**: they already picked a password before. Their browser may have saved it.
 - **They're signed in but didn't save the password**: they open `/admin`, click **Reset password** on their own row, save the new one, and sign in again.
-- **They can't get in at all**: do step 5 first. Then delete their row from the `user` table (a one-off query with `.env.local` pulled; their own chats go too). Then they do this step again.
+- **They can't get in at all**: delete their row from the `user` table (a one-off query using `.env.local`; their own chats go too). Then they do this step again.
 
-### 4. Set a spending limit
-
-Every AI message costs a tiny bit of money, paid through Vercel AI Gateway. A budget is the hard stop.
-
-1. In the Vercel dashboard, open **AI Gateway**.
-2. Add credits. Set a monthly budget they're comfortable with.
-
-The daily limits in `coach.config.ts` protect them too. The budget is the real safety net.
-
-### 5. Get the code onto their computer
-
-You need this before you can change anything. They installed the GitHub CLI (`gh`) and the Vercel CLI (`vercel`) in the homework video. If `pnpm` is missing, run `npm install -g pnpm`.
-
-```bash
-gh repo clone <their-github-username>/my-coaching-assistant
-cd my-coaching-assistant
-pnpm install
-vercel link --yes --project my-coaching-assistant
-vercel env pull .env.local
-```
-
-If `gh` or `vercel` says they're not logged in, tell them first: a page opens in their browser, and they click to approve.
-
-Next: ask what to call the app (`appName` in `coach.config.ts`). Then move their GPTs over.
+Next: move their GPTs over.
 
 ## Move a custom GPT over
 
@@ -130,8 +121,8 @@ Change a model only if they ask for it. Before you change it:
 | They say… | You change… |
 | --- | --- |
 | "Change the app name" / "the text on the home page" | `appName` / `tagline` in `coach.config.ts` |
-| "Make someone else an admin" | add their email to `ADMIN_EMAILS` in Vercel, with commas between emails: `vercel env update ADMIN_EMAILS --value "coach@x.com,them@y.com" --yes`. Then redeploy: `git commit --allow-empty -m "Update admins" && git push`. If they have no account yet, they sign in right after, and the password they type becomes theirs. |
-| "Take away someone's admin" | remove their email from `ADMIN_EMAILS` the same way, and redeploy. They become a normal client. To lock them out too, the coach clicks **Remove** on `/admin` after the update. |
+| "Make someone else an admin" | add their email to `adminEmails` in `coach.config.ts`. If they have no account yet, they sign in right after the update, and the password they type becomes theirs. |
+| "Take away someone's admin" | remove their email from `adminEmails`. They become a normal client. To lock them out too, the coach clicks **Remove** on `/admin` after the update. |
 | "Let people send more messages" | `limits` in `coach.config.ts` |
 | "Allow bigger files" | `knowledge.maxFileSizeMB` in `coach.config.ts` |
 | "Change how the assistant talks" | `assistants/<slug>/instructions.md` |
@@ -178,7 +169,7 @@ Then open http://localhost:3000.
 - `lib/knowledge.ts`: reads files (text as-is, PDFs through the chat model), chunks, embeds, and runs hybrid search (vector + keyword, RRF, then rerank)
 - `lib/file-types.ts`: allowed file types
 - `lib/limits.ts`, `lib/chats.ts`: daily limits, chat storage
-- `lib/auth.ts`: Better Auth with email + password. Sign-up is off, and there is no `/api/auth` route on purpose: accounts are only made by `createAccount()` (from `addClient` or an admin's first sign-in). Admin means "email is in the `ADMIN_EMAILS` env var" (filled in on the Deploy screen, commas between emails), checked on every request. Its secret is `DATABASE_URL`, so there's no secret to set up. The "Base URL is not set" warning is expected; leave it. Also `getUser()` (sends signed-out people to sign-in) and `requireAdmin()`. Every new page, route, or server action must call one of them.
+- `lib/auth.ts`: Better Auth with email + password. Sign-up is off, and there is no `/api/auth` route on purpose: accounts are only made by `createAccount()` (from `addClient` or an admin's first sign-in). Admin means "email is in `adminEmails`", checked on every request. Its secret is `DATABASE_URL`, so there's no secret to set up. The "Base URL is not set" warning is expected; leave it. Also `getUser()` (sends signed-out people to sign-in) and `requireAdmin()`. Every new page, route, or server action must call one of them.
 - `lib/db/schema.ts`: database tables. Better Auth's tables (`user`, `session`, `account`, `verification`) are generated into `lib/db/auth-schema.ts`. After a change, run `pnpm db:generate` (files land in `drizzle/`; don't hand-edit them). Migrations run automatically on each Vercel build.
 - `components/ui/`, `components/ai-elements/`, `hooks/`: copied-in library code (shadcn, AI Elements). Don't hand-edit or "fix" lint inside them.
 
