@@ -71,13 +71,7 @@ The daily limits in `coach.config.ts` protect them too. The budget is the real s
 
 ### 5. Get the code onto their computer
 
-You need this before you can change anything. Check which tools are there (`git`, `node`, `pnpm`, `gh`, `vercel`), and install only what's missing. Warn them before each of these, so nothing surprises them:
-
-- For `git`, the Mac may pop up a box about "command line developer tools". They click **Install** and wait a few minutes.
-- `gh auth login --web` and `vercel login` each open a page in their browser. They click to approve.
-- If the Mac asks for their computer password, that's normal.
-
-Then:
+You need this before you can change anything. They installed the GitHub CLI (`gh`) and the Vercel CLI (`vercel`) in the homework video. If `pnpm` is missing, run `npm install -g pnpm`.
 
 ```bash
 gh repo clone <their-github-username>/my-coaching-assistant
@@ -86,6 +80,8 @@ pnpm install
 vercel link --yes --project my-coaching-assistant
 vercel env pull .env.local
 ```
+
+If `gh` or `vercel` says they're not logged in, tell them first: a page opens in their browser, and they click to approve.
 
 Next: ask what to call the app (`appName` in `coach.config.ts`). Then move their GPTs over.
 
