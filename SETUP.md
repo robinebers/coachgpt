@@ -12,12 +12,12 @@ If they started before, first find their copy: a `my-coaching-assistant` folder,
 
 Run `gh auth status` and `vercel whoami`. If one isn't signed in, run `gh auth login --web` or `vercel login`. Then:
 
-- **git:** if `git --version` fails (likely on Windows), run `winget install --id Git.Git -e` and open a new terminal.
+- **git:** if `git --version` fails (likely on Windows), run `winget install --id Git.Git -e`. They click **Yes** if Windows asks, then quit and reopen this AI app so it finds git.
 - Run `gh auth setup-git`, so git uses their GitHub login.
 - If `pnpm` is missing, run `npm install -g pnpm`.
 - Update the Vercel CLI, since the commands below are new: `npm install -g vercel@latest` (or `brew upgrade vercel-cli` if Homebrew installed it).
 
-**Check:** both accounts show as signed in, `git --version` and `pnpm --version` work, `node --version` is 22 or newer, and `vercel ai-gateway budgets --help` works.
+**Check:** both accounts show as signed in, `git --version` and `pnpm --version` work, `node --version` is 22 or newer, and `vercel ai-gateway budgets --help` lists `set` and `inspect`.
 
 ## 2. Ask four things
 
@@ -32,7 +32,7 @@ Run `gh auth status` and `vercel whoami`. If one isn't signed in, run `gh auth l
 gh repo create my-coaching-assistant --private --clone --template robinebers/coachgpt
 cd my-coaching-assistant
 gh api user --jq '.id, .login, .name'
-git config user.name "<their name, or login>"
+git config user.name "<their name, or login if name is empty or null>"
 git config user.email "<id>+<login>@users.noreply.github.com"
 pnpm install
 vercel link --yes
@@ -51,6 +51,7 @@ The first time Neon is added, a page may open to accept its terms. They click **
 **Check:**
 
 - `gh repo view --json visibility` says `PRIVATE`, and `git config user.email` ends in `@users.noreply.github.com`.
+- `vercel git connect --yes` says the repo is already connected.
 - `vercel env ls production` lists `DATABASE_URL` and `DATABASE_URL_UNPOOLED`. Show names only, never values.
 - `vercel ai-gateway budgets inspect project my-coaching-assistant` shows their limit, refreshing monthly.
 
@@ -61,7 +62,7 @@ In `coach.config.ts`, replace `test@replace.me` in `adminEmails` with their emai
 **Check:**
 
 - `coach.config.ts` no longer contains `test@replace.me`, and `git status` shows nothing left to push.
-- `vercel inspect <newest deployment url> --wait` says **Ready**. No new deployment, or "Deployment Blocked"? The commit identity from step 3 is wrong. Fix it, then `git commit --allow-empty -m "Redeploy"` and push.
+- `vercel inspect <newest deployment url> --wait` says **Ready**. No new deployment, or "Deployment Blocked"? The commit identity from step 3 is wrong. Fix it, then `git commit --allow-empty -m "Redeploy"` and push. Still blocked? They connect GitHub in Vercel under **Account Settings → Authentication**.
 - Note the app's address: the `my-coaching-assistant….vercel.app` one under `Aliases` without `-git-` in it. Always open the app at this address, because client invites copy whatever address the coach has open.
 
 ## 5. First sign-in
