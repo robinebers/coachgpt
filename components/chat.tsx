@@ -2,6 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Conversation,
@@ -21,14 +22,17 @@ import {
 import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type ChatProps = {
   id: string;
   assistant: { slug: string; name: string; description: string; starters: string[] };
   initialMessages: UIMessage[];
+  readOnly?: { ownerId: string; ownerName: string };
 };
 
-export function Chat({ id, assistant, initialMessages }: ChatProps) {
+export function Chat({ id, assistant, initialMessages, readOnly }: ChatProps) {
   const router = useRouter();
   const { messages, sendMessage, status, stop, error } = useChat({
     id,
@@ -72,22 +76,38 @@ export function Chat({ id, assistant, initialMessages }: ChatProps) {
       </Conversation>
 
       <div className="flex flex-col gap-3">
-        {messages.length === 0 && (
-          <Suggestions>
-            {assistant.starters.map((starter) => (
-              <Suggestion key={starter} suggestion={starter} onClick={send} />
-            ))}
-          </Suggestions>
+        {readOnly ? (
+          <div className="flex items-center gap-3 rounded-lg border bg-muted px-3 py-2 text-sm">
+            <p className="min-w-0 flex-1 text-muted-foreground">
+              You’re reading {readOnly.ownerName}’s chat. Only they can reply.
+            </p>
+            <Link
+              href={`/admin/clients/${readOnly.ownerId}`}
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "shrink-0")}
+            >
+              All their chats
+            </Link>
+          </div>
+        ) : (
+          <>
+            {messages.length === 0 && (
+              <Suggestions>
+                {assistant.starters.map((starter) => (
+                  <Suggestion key={starter} suggestion={starter} onClick={send} />
+                ))}
+              </Suggestions>
+            )}
+            <PromptInput onSubmit={({ text }) => send(text)}>
+              <PromptInputBody>
+                <PromptInputTextarea placeholder={`Message ${assistant.name}`} />
+              </PromptInputBody>
+              <PromptInputFooter>
+                <PromptInputTools />
+                <PromptInputSubmit status={status} onStop={stop} />
+              </PromptInputFooter>
+            </PromptInput>
+          </>
         )}
-        <PromptInput onSubmit={({ text }) => send(text)}>
-          <PromptInputBody>
-            <PromptInputTextarea placeholder={`Message ${assistant.name}`} />
-          </PromptInputBody>
-          <PromptInputFooter>
-            <PromptInputTools />
-            <PromptInputSubmit status={status} onStop={stop} />
-          </PromptInputFooter>
-        </PromptInput>
       </div>
     </div>
   );
