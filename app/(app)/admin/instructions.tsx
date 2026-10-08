@@ -79,7 +79,7 @@ export function InstructionsButton(props: Props) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {!props.instructions && <Badge variant="outline">No instructions</Badge>}
+      {!props.instructions && <Badge variant="outline" className="self-center">No instructions</Badge>}
       <Button variant="outline" onClick={() => setOpen(true)}>
         <ScrollTextIcon data-icon="inline-start" />
         Instructions
