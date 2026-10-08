@@ -115,9 +115,11 @@ function FileRow({
 export function AssistantFiles({
   assistant,
   files,
+  action,
 }: {
   assistant: { slug: string; name: string; description: string };
   files: ServerFile[];
+  action?: ReactNode;
 }) {
   const [pending, setPending] = useState<PendingUpload[]>([]);
 
@@ -185,7 +187,8 @@ export function AssistantFiles({
       <CardHeader>
         <CardTitle>{assistant.name}</CardTitle>
         <CardDescription>{assistant.description}</CardDescription>
-        <CardAction>
+        <CardAction className="flex gap-2">
+          {action}
           <Button type="button" variant="outline" onClick={open}>
             Add files
           </Button>
