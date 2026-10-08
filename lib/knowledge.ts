@@ -1,5 +1,6 @@
-import { embed, embedMany, gateway, generateText, rerank } from "ai";
+import { embed, embedMany, gateway, rerank } from "ai";
 import { and, cosineDistance, desc, eq, sql } from "drizzle-orm";
+import { extractText, getDocumentProxy } from "unpdf";
 import { coachConfig } from "@/coach.config";
 import { chunks, db, documents } from "@/lib/db";
 
@@ -8,22 +9,8 @@ const { models } = coachConfig;
 async function readFileText(fileName: string, bytes: Uint8Array) {
   if (!fileName.toLowerCase().endsWith(".pdf")) return new TextDecoder().decode(bytes);
 
-  const { text, finishReason } = await generateText({
-    model: models.chat,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "text",
-            text: "Copy all text in this PDF faithfully, in reading order, as Markdown. Describe images and charts in words. Reply with the content only.",
-          },
-          { type: "file", data: bytes, mediaType: "application/pdf", filename: fileName },
-        ],
-      },
-    ],
-  });
-  if (finishReason !== "stop") throw new Error("This PDF is too long. Split it into smaller files.");
+  const { text } = await extractText(await getDocumentProxy(bytes), { mergePages: true });
+  if (!text.trim()) throw new Error("This PDF has no text in it. It may be a scan.");
   return text;
 }
 
@@ -31,21 +18,20 @@ const chunkSize = 1500;
 const chunkOverlap = 200;
 
 function splitIntoChunks(text: string) {
-  const paragraphs = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   const pieces: string[] = [];
   let current = "";
-  for (const paragraph of paragraphs) {
-    if (current && current.length + paragraph.length > chunkSize) {
-      pieces.push(current);
+  for (const line of text.split("\n")) {
+    if (current.trim() && current.length + line.length > chunkSize) {
+      pieces.push(current.trim());
       current = current.slice(-chunkOverlap);
     }
-    current = current ? `${current}\n\n${paragraph}` : paragraph;
+    current = current ? `${current}\n${line}` : line;
     while (current.length > chunkSize * 1.5) {
       pieces.push(current.slice(0, chunkSize));
       current = current.slice(chunkSize - chunkOverlap);
     }
   }
-  if (current) pieces.push(current);
+  if (current.trim()) pieces.push(current.trim());
   return pieces;
 }
 

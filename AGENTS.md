@@ -102,7 +102,8 @@ Tell them plainly:
 - **ChatGPT doesn't let you download knowledge files.** They need the original files from their computer, Google Drive, or wherever they first made them.
 - Supported files: `.pdf`, `.txt`, `.md`, `.srt`, `.vtt`.
 - After upload, a file shows "reading…" for a little while, then "ready". If it shows "failed", hover over it to see why.
-- Each file can be up to 4 MB. Very long PDFs (a whole book) may fail even when smaller. Split big files into smaller ones.
+- Each file can be up to 4 MB. Split bigger files into smaller ones.
+- Scanned PDFs (photos of pages) fail, because there's no text in them to read. Images and charts inside PDFs are skipped.
 - GPT extras like web browsing, image making, code running, and Actions are not part of this app.
 
 ## Models
@@ -168,7 +169,7 @@ Then open http://localhost:3000.
 - `app/sign-in/`: the sign-in page. While there are no accounts at all, it shows the coach's first-time screen. An admin's first sign-in creates their account (`actions.ts`).
 - `assistants/index.ts`: the list of assistants. Each key is the web address. Instructions are imported as text (see the `*.md` rule in `next.config.ts`) and never sent to the browser.
 - `app/api/chat/route.ts`: counts the message against the limits, streams the reply, saves messages. Admin messages are not counted.
-- `lib/knowledge.ts`: reads uploaded files right away (text as-is, PDFs through the chat model), chunks, embeds, and runs hybrid search (vector + keyword, RRF, then rerank). The original files are not kept.
+- `lib/knowledge.ts`: reads uploaded files right away (text as-is, PDF text with `unpdf`), chunks, embeds, and runs hybrid search (vector + keyword, RRF, then rerank). The original files are not kept.
 - `lib/file-types.ts`: allowed file types and the 4 MB size limit (also the server action body limit in `next.config.ts`)
 - `lib/limits.ts`, `lib/chats.ts`: daily limits, chat storage
 - `lib/auth.ts`: Better Auth with email + password. Sign-up is off, and there is no `/api/auth` route on purpose: accounts are only made by `createAccount()` (from `saveClient` or an admin's first sign-in). Admin means "email is in `adminEmails`", checked on every request. Its secret is `DATABASE_URL`, so there's no secret to set up. The "Base URL is not set" warning is expected; leave it. Also `getUser()` (sends signed-out people to sign-in) and `requireAdmin()`. Every new page, route, or server action must call one of them.
