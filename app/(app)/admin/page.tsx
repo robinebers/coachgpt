@@ -43,7 +43,7 @@ export default async function AdminPage() {
           <h2 className="font-semibold text-lg">Assistants</h2>
           <p className="text-muted-foreground text-sm">
             Add the knowledge files each assistant can search: {allowedExtensions.map((e) => `.${e}`).join(", ")}.
-            Only add material you&apos;re OK with clients seeing through the assistant.
+            Only add material you’re OK with clients seeing through the assistant.
           </p>
         </div>
         {Object.entries(assistants).map(([slug, assistant]) => {
