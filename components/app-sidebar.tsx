@@ -22,7 +22,7 @@ import { listChats } from "@/lib/chats";
 
 export async function AppSidebar() {
   const user = await getUser();
-  const chats = (await listChats(user.id)).filter((chat) => chat.assistantSlug in assistants);
+  const chats = (await listChats(user.id, 100)).filter((chat) => chat.assistantSlug in assistants);
 
   return (
     <Sidebar>

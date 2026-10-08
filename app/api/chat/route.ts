@@ -15,7 +15,7 @@ import { z } from "zod";
 import { assistants, getAssistant } from "@/assistants";
 import { coachConfig } from "@/coach.config";
 import { getUser } from "@/lib/auth";
-import { chatAccess, getChat, getMessages, saveMessage, titleFrom } from "@/lib/chats";
+import { getChatFor, getMessages, saveMessage, titleFrom } from "@/lib/chats";
 import { chats, db } from "@/lib/db";
 import { searchKnowledge } from "@/lib/knowledge";
 import { countMessage } from "@/lib/limits";
@@ -24,8 +24,8 @@ export async function POST(request: Request) {
   const user = await getUser();
   const body = (await request.json()) as { id: string; assistant: string; message: UIMessage };
 
-  const chat = await getChat(body.id);
-  if (chat && chatAccess(chat, user) !== "owner") {
+  const chat = await getChatFor(body.id, user);
+  if (chat === "forbidden" || chat?.access === "reader") {
     return new Response("You can only send messages in your own chats.", { status: 403 });
   }
   const assistant = getAssistant(chat?.assistantSlug ?? body.assistant);

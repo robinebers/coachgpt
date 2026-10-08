@@ -58,11 +58,11 @@ export async function processDocument(document: typeof documents.$inferSelect, b
       .set({ status: "ready", error: null })
       .where(eq(documents.id, document.id));
   } catch (error) {
-    await db.delete(chunks).where(eq(chunks.documentId, document.id));
     await db
       .update(documents)
       .set({ status: "failed", error: (error as Error).message })
       .where(eq(documents.id, document.id));
+    await db.delete(chunks).where(eq(chunks.documentId, document.id));
   }
 }
 
@@ -76,20 +76,21 @@ export async function searchKnowledge(assistantSlug: string, query: string) {
   });
   const keywordQuery = sql`websearch_to_tsquery('simple', ${query})`;
   const columns = { id: chunks.id, content: chunks.content, file: documents.name };
+  const searchable = and(eq(documents.assistantSlug, assistantSlug), eq(documents.status, "ready"));
 
   const [byMeaning, byKeyword] = await Promise.all([
     db
       .select(columns)
       .from(chunks)
       .innerJoin(documents, eq(chunks.documentId, documents.id))
-      .where(and(eq(documents.assistantSlug, assistantSlug), eq(documents.status, "ready")))
+      .where(searchable)
       .orderBy(cosineDistance(chunks.embedding, embedding))
       .limit(candidatesPerSearch),
     db
       .select(columns)
       .from(chunks)
       .innerJoin(documents, eq(chunks.documentId, documents.id))
-      .where(and(eq(documents.assistantSlug, assistantSlug), eq(documents.status, "ready"), sql`${chunks.search} @@ ${keywordQuery}`))
+      .where(and(searchable, sql`${chunks.search} @@ ${keywordQuery}`))
       .orderBy(desc(sql`ts_rank(${chunks.search}, ${keywordQuery})`))
       .limit(candidatesPerSearch),
   ]);

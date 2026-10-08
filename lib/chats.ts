@@ -2,33 +2,27 @@ import type { UIMessage } from "ai";
 import { asc, desc, eq, getTableColumns } from "drizzle-orm";
 import { chats, db, messages, user } from "@/lib/db";
 
-export type ChatAccess = "owner" | "reader";
-
-export function chatAccess(
-  chat: { userId: string },
-  viewer: { id: string; isAdmin: boolean },
-): ChatAccess | null {
-  if (chat.userId === viewer.id) return "owner";
-  if (viewer.isAdmin) return "reader";
-  return null;
-}
-
-export async function listChats(userId: string) {
-  return db
+export async function listChats(userId: string, limit?: number) {
+  const query = db
     .select({ id: chats.id, title: chats.title, assistantSlug: chats.assistantSlug, updatedAt: chats.updatedAt })
     .from(chats)
     .where(eq(chats.userId, userId))
     .orderBy(desc(chats.updatedAt))
-    .limit(100);
+    .$dynamic();
+  return limit ? query.limit(limit) : query;
 }
 
-export async function getChat(chatId: string) {
+// Owners read and write their own chats. Admins can read everyone else's, never write them.
+export async function getChatFor(chatId: string, viewer: { id: string; isAdmin: boolean }) {
   const [chat] = await db
     .select({ ...getTableColumns(chats), ownerName: user.name })
     .from(chats)
     .innerJoin(user, eq(chats.userId, user.id))
     .where(eq(chats.id, chatId));
-  return chat ?? null;
+  if (!chat) return null;
+  if (chat.userId === viewer.id) return { ...chat, access: "owner" as const };
+  if (viewer.isAdmin) return { ...chat, access: "reader" as const };
+  return "forbidden";
 }
 
 export async function getMessages(chatId: string): Promise<UIMessage[]> {

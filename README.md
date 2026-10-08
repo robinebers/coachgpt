@@ -1,42 +1,35 @@
-> **Note for AI assistants (Claude Code, Cursor, and others):** Read [AGENTS.md](AGENTS.md) now and follow it. The person you are helping is a coach, not a developer. Guide them one small step at a time, in plain words.
+> **AI assistants:** read [AGENTS.md](AGENTS.md) and follow it. To set this up, follow [SETUP.md](SETUP.md). The person you're helping is a coach, not a developer.
 
 # CoachGPT
 
 Your custom GPTs, in your own app.
 
-This is a ready-made template for online coaches and consultants. It moves your custom GPTs out of ChatGPT and into a private app that you own. Your instructions and your files stay with you.
+A free template for coaches and consultants. It moves your custom GPTs out of ChatGPT and into a private app for your clients. You own the app, your instructions, and your files.
 
-What you get:
+- **Several assistants**, each with its own instructions and knowledge files, like a custom GPT.
+- **Invite-only.** You add each client and get a password to send them.
+- **Limits.** A daily message limit per client, plus a monthly AI budget as a safety net.
+- **Saved chats.** Clients come back to past chats. You can read any client's chats from the admin page.
+- **Knowledge search** in `.pdf`, `.txt`, `.md`, `.srt`, and `.vtt` files, up to 4 MB each.
 
-- **Several assistants.** Each one has its own instructions and knowledge files, just like a custom GPT.
-- **Invite-only login.** You add each client and get a password to send them. Nobody else can get in.
-- **Limits.** A daily message limit for each client, plus a monthly budget for the whole app, so your costs never surprise you.
-- **Saved chats.** Clients can come back to past conversations in the sidebar. You can read any client's chats from the admin page.
-- **Smart search.** The assistant finds the right part of your knowledge files. Supports `.pdf`, `.txt`, `.md`, `.srt`, and `.vtt`, up to 4 MB each.
+Only upload material you're OK with clients seeing through the assistant.
 
-## The easy way to set it up
+## Set it up
 
-1. Open [Claude Code](https://claude.com/claude-code) or [Cursor](https://cursor.com).
-2. Paste this into the chat:
+You need free [GitHub](https://github.com/signup) and [Vercel](https://vercel.com/signup) accounts, with their command-line tools installed (the homework video shows how).
 
-   ```
-   Help me set up https://github.com/robinebers/coachgpt
-   ```
-
-3. Your AI reads the setup guide and walks you through each step.
-
-You need free [GitHub](https://github.com/signup) and [Vercel](https://vercel.com/signup) accounts, with their command-line tools installed (the homework video shows how). Your AI does the rest, including the database.
-
-📺 **Video walkthrough:** coming soon.
+1. Open [Claude Code](https://claude.com/claude-code), [Codex](https://openai.com/codex), or [Cursor](https://cursor.com).
+2. Paste this in: `Help me set up https://github.com/robinebers/coachgpt`
+3. Your AI does the rest and tells you when you need to click something.
 
 ## What it costs
 
-- Vercel and Neon both have free plans that are enough to start.
-- The AI is paid through Vercel AI Gateway, per message. You set a monthly budget during setup, so you can't overspend.
+- Vercel and Neon (the database) have free plans that are enough to start.
+- The AI is paid from prepaid credits on Vercel AI Gateway. You also set a monthly budget during setup.
 
 ## For developers
 
-Next.js 16, AI SDK 7 through Vercel AI Gateway, Neon Postgres with pgvector and Drizzle, Better Auth, shadcn/ui, and AI Elements. Search is hybrid (vector + keyword, merged with reciprocal rank fusion) and then reranked. See [AGENTS.md](AGENTS.md) for the file map.
+Next.js 16, AI SDK 7 via Vercel AI Gateway, Neon Postgres with pgvector and Drizzle, Better Auth, shadcn/ui, and AI Elements. Search is hybrid (vector + keyword, reciprocal rank fusion), then reranked.
 
 ## License
 
