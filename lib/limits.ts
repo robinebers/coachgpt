@@ -18,7 +18,6 @@ export async function getUsageToday() {
   return { messages: row?.messages ?? 0, people: row?.people ?? 0 };
 }
 
-// Counts one message. Returns a friendly message if a daily limit is reached.
 export async function countMessage(userId: string) {
   const { messagesPerPersonPerDay, messagesTotalPerDay } = coachConfig.limits;
   if ((await getUsageToday()).messages >= messagesTotalPerDay) {

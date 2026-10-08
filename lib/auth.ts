@@ -15,7 +15,6 @@ export const auth = betterAuth({
   plugins: [nextCookies()],
 });
 
-// Typed in when the app was deployed. More than one admin? Separate the emails with commas.
 const adminEmails = process.env.ADMIN_EMAILS!.toLowerCase().split(",").map((email) => email.trim());
 export const isAdminEmail = (email: string) => adminEmails.includes(email);
 

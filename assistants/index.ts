@@ -1,9 +1,5 @@
 import exampleCoach from "./example-coach/assistant";
 
-// The list of all your assistants.
-// The name on the left is the web address: yoursite.com/example-coach
-// To add one: copy the "example-coach" folder, rename the copy,
-// then add a line below like:  "your-assistant": yourAssistant,
 export const assistants = {
   "example-coach": exampleCoach,
 };
