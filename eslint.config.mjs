@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Copied-in library code (shadcn, AI Elements). Updated by their CLIs, not by hand.
+    "components/ui/**",
+    "components/ai-elements/**",
+    "hooks/**",
   ]),
 ]);
 

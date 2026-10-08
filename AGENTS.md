@@ -127,6 +127,7 @@ Change a model only if they ask for it. Before you change it:
 | "Change the monthly AI budget" | `vercel ai-gateway budgets set project my-coaching-assistant --limit <dollars>` |
 | "Allow bigger files" | not possible: Vercel caps uploads at 4.5 MB. They split the file into smaller ones. |
 | "Change how the assistant talks" | `assistants/<slug>/instructions.md` |
+| "Let the assistant quote or name my files" | `knowledgeRules` in `app/api/chat/route.ts`. By default it uses the files in its own words and never quotes or names them, so the coach's material stays private. Tool results are never sent to the browser either way. |
 | "Change the starter buttons" / "the description" | `assistants/<slug>/assistant.ts` |
 | "Add an assistant" | follow "Move a custom GPT over" |
 | "Add a client" | they do it on the `/admin` page. They get a password to send the client. |
@@ -168,7 +169,7 @@ Then open http://localhost:3000.
 - `components/app-sidebar.tsx`, `nav-links.tsx`, `nav-user.tsx`: the sidebar, its links and chat "⋯" menu, and the account menu. `confirm-dialog.tsx`: the "are you sure?" dialog.
 - `app/sign-in/`: the sign-in page. While there are no accounts at all, it shows the coach's first-time screen. An admin's first sign-in creates their account (`actions.ts`).
 - `assistants/index.ts`: the list of assistants. Each key is the web address. Instructions are imported as text (see the `*.md` rule in `next.config.ts`) and never sent to the browser.
-- `app/api/chat/route.ts`: counts the message against the limits, streams the reply, saves messages. Admin messages are not counted.
+- `app/api/chat/route.ts`: counts the message against the limits, streams the reply with its thinking, saves messages. Admin messages are not counted. Tool chunks are filtered out of the stream, and `withoutToolParts` in `lib/chats.ts` strips them from saved chats before they reach the browser: they hold knowledge file text word for word.
 - `lib/knowledge.ts`: reads uploaded files right away (text as-is, PDF text with `unpdf`), chunks, embeds, and runs hybrid search (vector + keyword, RRF, then rerank). The original files are not kept.
 - `lib/file-types.ts`: allowed file types and the 4 MB size limit (also the server action body limit in `next.config.ts`)
 - `lib/limits.ts`, `lib/chats.ts`: daily limits, chat storage

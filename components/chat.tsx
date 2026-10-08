@@ -18,7 +18,8 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
-import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
+import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
+import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 
 type ChatProps = {
@@ -42,6 +43,8 @@ export function Chat({ id, assistant, initialMessages }: ChatProps) {
   });
 
   const busy = status === "submitted" || status === "streaming";
+  const last = messages.at(-1);
+  const thinking = busy && !(last?.role === "assistant" && last.parts.at(-1)?.type === "text");
 
   function send(text: string) {
     if (!text.trim() || busy) return;
@@ -56,7 +59,12 @@ export function Chat({ id, assistant, initialMessages }: ChatProps) {
           {messages.length === 0 ? (
             <ConversationEmptyState title={assistant.name} description={assistant.description} />
           ) : (
-            messages.map((message) => <ChatMessage key={message.id} message={message} />)
+            messages.map((message) => (
+              <ChatMessage key={message.id} message={message} thinking={thinking && message === last} />
+            ))
+          )}
+          {thinking && !(last?.role === "assistant" && thoughtsOf(last)) && (
+            <Shimmer className="text-sm">Thinking...</Shimmer>
           )}
           {error && <p className="text-destructive text-sm">{error.message}</p>}
         </ConversationContent>
@@ -85,26 +93,31 @@ export function Chat({ id, assistant, initialMessages }: ChatProps) {
   );
 }
 
-function ChatMessage({ message }: { message: UIMessage }) {
-  const files = new Set<string>();
-  for (const part of message.parts) {
-    if (part.type === "tool-searchKnowledge" && part.state === "output-available") {
-      for (const result of part.output as { file: string }[]) files.add(result.file);
-    }
-  }
+function thoughtsOf(message: UIMessage) {
+  return message.parts.flatMap((part) => (part.type === "reasoning" && part.text ? [part.text] : [])).join("\n\n");
+}
+
+function ChatMessage({ message, thinking }: { message: UIMessage; thinking: boolean }) {
+  const thoughts = thoughtsOf(message);
 
   return (
     <Message from={message.role}>
       <MessageContent>
-        {files.size > 0 && (
-          <Sources>
-            <SourcesTrigger count={files.size} />
-            <SourcesContent>
-              {[...files].map((file) => (
-                <Source key={file} title={file} />
-              ))}
-            </SourcesContent>
-          </Sources>
+        {thoughts && (
+          <Reasoning isStreaming={thinking}>
+            <ReasoningTrigger
+              getThinkingMessage={(streaming, seconds) =>
+                streaming ? (
+                  <Shimmer duration={1}>Thinking...</Shimmer>
+                ) : seconds && seconds > 1 ? (
+                  `Thought for ${seconds} seconds`
+                ) : (
+                  "Show thinking"
+                )
+              }
+            />
+            <ReasoningContent>{thoughts}</ReasoningContent>
+          </Reasoning>
         )}
         {message.parts.map((part, index) =>
           part.type === "text" ? <MessageResponse key={index}>{part.text}</MessageResponse> : null,

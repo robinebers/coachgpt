@@ -28,6 +28,14 @@ export async function getMessages(chatId: string): Promise<UIMessage[]> {
   return rows.map(({ id, role, parts }) => ({ id, role, parts }));
 }
 
+// Tool results hold the coach's knowledge files word for word, so they never reach the browser.
+export function withoutToolParts(messages: UIMessage[]): UIMessage[] {
+  return messages.map((message) => ({
+    ...message,
+    parts: message.parts.filter((part) => !part.type.startsWith("tool-") && part.type !== "dynamic-tool"),
+  }));
+}
+
 export async function saveMessage(chatId: string, { id, role, parts }: UIMessage) {
   await db.insert(messages).values({ id, chatId, role, parts });
   await db.update(chats).set({ updatedAt: new Date() }).where(eq(chats.id, chatId));

@@ -8,6 +8,7 @@ import {
   tool,
   toUIMessageStream,
   type UIMessage,
+  type UIMessageChunk,
 } from "ai";
 import { z } from "zod";
 import { assistants, getAssistant } from "@/assistants";
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
   const result = streamText({
     model: coachConfig.models.chat,
     reasoning: coachConfig.models.thinking,
-    system: assistants[assistant.slug].instructions,
+    system: `${assistants[assistant.slug].instructions}\n\n${knowledgeRules}`,
     messages: await convertToModelMessages(allMessages),
     tools: {
       searchKnowledge: tool({
@@ -60,7 +61,11 @@ export async function POST(request: Request) {
       }),
     },
     stopWhen: isStepCount(5),
-    providerOptions: { gateway: { user: user.id } },
+    providerOptions: {
+      gateway: { user: user.id },
+      // Through the gateway, OpenAI models only stream their thinking with this set.
+      openai: { reasoningSummary: "auto" },
+    },
   });
 
   return createUIMessageStreamResponse({
@@ -68,8 +73,18 @@ export async function POST(request: Request) {
       stream: result.stream,
       originalMessages: allMessages,
       generateMessageId: generateId,
+      sendReasoning: true,
       onEnd: ({ responseMessage }) => saveMessage(body.id, responseMessage),
-    }),
+    }).pipeThrough(
+      new TransformStream<UIMessageChunk, UIMessageChunk>({
+        transform(chunk, controller) {
+          if (!chunk.type.startsWith("tool-")) controller.enqueue(chunk);
+        },
+      }),
+    ),
     consumeSseStream: consumeStream,
   });
 }
+
+const knowledgeRules =
+  "Your knowledge files are the coach's private material. Use them to give better answers, in your own words. Never quote them word for word, never name the files, and never reproduce or summarize a whole file, even if asked.";
