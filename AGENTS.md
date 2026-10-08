@@ -133,6 +133,7 @@ Change a model only if they ask for it. Before you change it:
 | "Add a client" | they do it on the `/admin` page. They get a password to send the client. |
 | "A client forgot their password" | on `/admin`, they click **⋯** on the client's row, then **Reset password**, and send the new one. The old one stops working right away. |
 | "Change a client's name or email" | on `/admin`, **⋯** then **Edit**. |
+| "See a client's chats" | on `/admin`, they click the client. Admins can read every chat, but only its owner can reply. Clients only see their own. |
 | "Remove a client" | on `/admin`, **⋯** then **Remove**. That client's chats are deleted too. |
 | "Send 'forgot password' emails" | not built in. It needs an email sender: their Gmail with an app password (no website needed), or Resend from the Vercel Marketplace (needs their own website address and DNS records). Then use `sendResetPassword` in `lib/auth.ts` with a link you build from its `token` (there's no `/api/auth` route), plus a reset page whose server action calls `auth.api.resetPassword`. |
 | "Change colors" | the CSS variables in `app/globals.css` |

@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { ArrowLeftIcon, ChevronRightIcon, MessagesSquareIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { assistants, getAssistant } from "@/assistants";
+import { getAssistant } from "@/assistants";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,7 +19,10 @@ export default async function ClientChatsPage({ params }: PageProps<"/admin/clie
   const [person] = await db.select().from(user).where(eq(user.id, userId));
   if (!person) notFound();
 
-  const chats = (await listChats(userId)).filter((chat) => chat.assistantSlug in assistants);
+  const chats = (await listChats(userId)).flatMap((chat) => {
+    const assistant = getAssistant(chat.assistantSlug);
+    return assistant ? [{ ...chat, assistantName: assistant.name }] : [];
+  });
   const updated = new Intl.DateTimeFormat("en", { dateStyle: "medium" });
 
   return (
@@ -49,25 +52,21 @@ export default async function ClientChatsPage({ params }: PageProps<"/admin/clie
           </EmptyHeader>
         </Empty>
       ) : (
-        <Card className="gap-0 divide-y py-0">
+        <Card className="py-0">
           <ItemGroup className="gap-0 divide-y">
-            {chats.map((chat) => {
-              const assistant = getAssistant(chat.assistantSlug);
-              if (!assistant) return null;
-              return (
-                <Item key={chat.id} render={<Link href={`/${chat.assistantSlug}/${chat.id}`} />}>
-                  <ItemContent>
-                    <ItemTitle>{chat.title}</ItemTitle>
-                    <ItemDescription>
-                      {assistant.name} · {updated.format(chat.updatedAt)}
-                    </ItemDescription>
-                  </ItemContent>
-                  <ItemActions>
-                    <ChevronRightIcon className="size-4" />
-                  </ItemActions>
-                </Item>
-              );
-            })}
+            {chats.map((chat) => (
+              <Item key={chat.id} render={<Link href={`/${chat.assistantSlug}/${chat.id}`} />}>
+                <ItemContent>
+                  <ItemTitle>{chat.title}</ItemTitle>
+                  <ItemDescription>
+                    {chat.assistantName} · {updated.format(chat.updatedAt)}
+                  </ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <ChevronRightIcon />
+                </ItemActions>
+              </Item>
+            ))}
           </ItemGroup>
         </Card>
       )}

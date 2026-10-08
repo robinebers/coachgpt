@@ -17,7 +17,7 @@ export default async function ChatPage({ params }: PageProps<"/[assistant]/[chat
       id={chat.id}
       assistant={assistant}
       initialMessages={withoutToolParts(await getMessages(chat.id))}
-      {...(access === "reader" ? { readOnly: { ownerId: chat.userId, ownerName: chat.ownerName } } : {})}
+      readOnly={access === "reader" ? { ownerId: chat.userId, ownerName: chat.ownerName } : undefined}
     />
   );
 }
