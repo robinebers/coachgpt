@@ -95,7 +95,7 @@ function FileRow({
         <FileTextIcon />
       </ItemMedia>
       <ItemContent className="min-w-0">
-        <ItemTitle className="w-full truncate">{name}</ItemTitle>
+        <ItemTitle className="w-full">{name}</ItemTitle>
       </ItemContent>
       <ItemActions className="shrink-0">
         <FileStatus status={status} error={error} />
@@ -173,7 +173,7 @@ export function AssistantFiles({
       {...getRootProps({
         className: cn(
           "relative",
-          isDragActive && "overflow-visible bg-primary/5 ring-0 outline-2 outline-dashed outline-primary",
+          isDragActive && "overflow-visible ring-0 outline-2 outline-dashed outline-primary",
         ),
       })}
     >
@@ -239,7 +239,7 @@ export function AssistantFiles({
         )}
       </CardContent>
       {isDragActive && (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-primary/5 px-6 text-center font-medium">
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/90 px-6 text-center font-medium">
           Drop to add to {assistant.name}
         </div>
       )}
