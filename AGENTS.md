@@ -20,7 +20,7 @@ You are helping a coach or consultant set up and run this app. It is their own p
 
 ## Setup checklist
 
-You run every step in the terminal. They only answer three questions, add AI credits, and pick a password. They already have the GitHub CLI (`gh`) and the Vercel CLI (`vercel`) from the homework video.
+You run every step in the terminal. They only answer four questions, add AI credits, and pick a password. They already have the GitHub CLI (`gh`) and the Vercel CLI (`vercel`) from the homework video.
 
 Before anything opens in their browser, tell them in one sentence what it is and what to click.
 
@@ -30,11 +30,12 @@ If they started before, ask how far they got. Clues: a `my-coaching-assistant` f
 
 Run `gh auth status` and `vercel whoami`. If one isn't logged in, run `gh auth login --web` or `vercel login`. If `pnpm` is missing, run `npm install -g pnpm`.
 
-### 2. Ask three things
+### 2. Ask four things
 
 - The email they'll sign in with. Read it back, because a typo locks them out.
 - What to call the app.
-- A monthly AI budget. Suggest $100 a month, and use whatever they pick. Every message costs a tiny bit, and the budget is a hard stop.
+- How many messages each client may send per day. Suggest 50.
+- A monthly AI budget for the whole app. Suggest $100. It's a safety net, so it should be high: the daily message limit is what keeps normal costs down. When it runs out, the AI stops for everyone until next month.
 
 ### 3. Make their copy and put it online
 
@@ -53,11 +54,11 @@ vercel env pull .env.local
 
 The first time Neon is added, a page may open to accept its terms. They click **Accept**.
 
-Then replace `test@replace.me` in `adminEmails` with their email, and set `appName`, in `coach.config.ts`. Never push it with `test@replace.me` still there: anyone could sign in as admin with it. Commit and push. Vercel builds the app in about two minutes (`vercel ls` shows when it's Ready).
+Then, in `coach.config.ts`, replace `test@replace.me` in `adminEmails` with their email, and set `appName` and `messagesPerClientPerDay`. Never push it with `test@replace.me` still there: anyone could sign in as admin with it. Commit and push. Vercel builds the app in about two minutes (`vercel ls` shows when it's Ready).
 
 ### 4. Add AI credits
 
-In the Vercel dashboard, they open **AI Gateway** and add credits. The budget from step 2 caps what gets spent. The daily limits in `coach.config.ts` help too.
+In the Vercel dashboard, they open **AI Gateway** and add credits. The budget from step 2 caps what gets spent.
 
 ### 5. First sign-in
 
@@ -123,7 +124,8 @@ Change a model only if they ask for it. Before you change it:
 | "Change the app name" / "the text on the home page" | `appName` / `tagline` in `coach.config.ts` |
 | "Make someone else an admin" | add their email to `adminEmails` in `coach.config.ts`. If they have no account yet, they sign in right after the update, and the password they type becomes theirs. |
 | "Take away someone's admin" | remove their email from `adminEmails`. They become a normal client. To lock them out too, the coach clicks **Remove** on `/admin` after the update. |
-| "Let people send more messages" | `limits` in `coach.config.ts` |
+| "Let people send more messages" | `messagesPerClientPerDay` in `coach.config.ts` |
+| "Change the monthly AI budget" | `vercel ai-gateway budgets set project my-coaching-assistant --limit <dollars>` |
 | "Allow bigger files" | `knowledge.maxFileSizeMB` in `coach.config.ts` |
 | "Change how the assistant talks" | `assistants/<slug>/instructions.md` |
 | "Change the starter buttons" / "the description" | `assistants/<slug>/assistant.ts` |

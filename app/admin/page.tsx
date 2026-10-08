@@ -1,7 +1,6 @@
 import { desc } from "drizzle-orm";
 import Link from "next/link";
 import { assistants } from "@/assistants";
-import { coachConfig } from "@/coach.config";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,9 +59,7 @@ export default async function AdminPage() {
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <div className="font-semibold text-xl">
-              {usageToday.messages} / {coachConfig.limits.messagesTotalPerDay}
-            </div>
+            <div className="font-semibold text-xl">{usageToday.messages}</div>
             <div className="text-muted-foreground">messages</div>
           </div>
           <div>

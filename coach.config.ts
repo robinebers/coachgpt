@@ -3,10 +3,7 @@ export const coachConfig: CoachConfig = {
   tagline: "Pick an assistant to start chatting.",
   // Placeholder. Replace with the coach's email during setup, or anyone can claim admin with it.
   adminEmails: ["test@replace.me"],
-  limits: {
-    messagesPerPersonPerDay: 50,
-    messagesTotalPerDay: 1000,
-  },
+  messagesPerClientPerDay: 50,
   knowledge: {
     maxFileSizeMB: 25,
   },
@@ -22,7 +19,7 @@ type CoachConfig = {
   appName: string;
   tagline: string;
   adminEmails: string[];
-  limits: { messagesPerPersonPerDay: number; messagesTotalPerDay: number };
+  messagesPerClientPerDay: number;
   knowledge: { maxFileSizeMB: number };
   models: {
     chat: string;

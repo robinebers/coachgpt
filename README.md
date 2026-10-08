@@ -10,7 +10,7 @@ What you get:
 
 - **Several assistants.** Each one has its own instructions and knowledge files, just like a custom GPT.
 - **Invite-only login.** You add each client and get a password to send them. Nobody else can get in.
-- **Daily limits.** Set a limit for each person and for everyone together, so your costs never surprise you.
+- **Limits.** A daily message limit for each client, plus a monthly budget for the whole app, so your costs never surprise you.
 - **Saved chats.** Clients can come back to past conversations in the sidebar.
 - **Smart search.** The assistant finds the right part of your knowledge files. Supports `.pdf`, `.txt`, `.md`, `.srt`, and `.vtt`.
 

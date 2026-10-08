@@ -19,17 +19,13 @@ export async function getUsageToday() {
 }
 
 export async function countMessage(userId: string) {
-  const { messagesPerPersonPerDay, messagesTotalPerDay } = coachConfig.limits;
-  if ((await getUsageToday()).messages >= messagesTotalPerDay) {
-    return "The assistant is very busy today. Please come back tomorrow.";
-  }
   const counted = await db
     .insert(usage)
     .values({ userId, day: today(), messages: 1 })
     .onConflictDoUpdate({
       target: [usage.userId, usage.day],
       set: { messages: sql`${usage.messages} + 1` },
-      setWhere: sql`${usage.messages} < ${messagesPerPersonPerDay}`,
+      setWhere: sql`${usage.messages} < ${coachConfig.messagesPerClientPerDay}`,
     })
     .returning({ messages: usage.messages });
   if (counted.length === 0) return "You reached today's message limit. Please come back tomorrow.";
