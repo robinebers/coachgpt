@@ -42,7 +42,7 @@ vercel ai-gateway budgets set project my-coaching-assistant --limit <their budge
 vercel env pull .env.local
 ```
 
-The two `git config` lines tie their commits to their GitHub account. Vercel's free plan won't deploy a private repo otherwise.
+The two `git config` lines tie their commits to their GitHub account. Vercel blocks deploys from commits it can't match to one.
 
 If `vercel git connect` says "Failed to connect", Vercel can't see their GitHub yet. Open https://github.com/apps/vercel/installations/new. They pick their account and click **Install**. Then run it again.
 

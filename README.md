@@ -4,7 +4,7 @@
 
 Your custom GPTs, in your own app.
 
-A free template for coaches and consultants. It moves your custom GPTs out of ChatGPT and into a private app for your clients. You own the app, your instructions, and your files.
+A template for coaches and consultants. It moves your custom GPTs out of ChatGPT and into a private app for your clients. You own the app, your instructions, and your files.
 
 - **Several assistants**, each with its own instructions and knowledge files, like a custom GPT.
 - **Invite-only.** You add each client and get a password to send them.
@@ -16,16 +16,11 @@ Only upload material you're OK with clients seeing through the assistant.
 
 ## Set it up
 
-You need free [GitHub](https://github.com/signup) and [Vercel](https://vercel.com/signup) accounts, with their command-line tools installed (the homework video shows how).
+You need [GitHub](https://github.com/signup) and [Vercel](https://vercel.com/signup) accounts, with their command-line tools installed (the homework video shows how).
 
 1. Open [Claude Code](https://claude.com/claude-code), [Codex](https://openai.com/codex), or [Cursor](https://cursor.com).
 2. Paste this in: `Help me set up https://github.com/robinebers/coachgpt`
 3. Your AI does the rest and tells you when you need to click something.
-
-## What it costs
-
-- Vercel and Neon (the database) have free plans that are enough to start.
-- The AI is paid from prepaid credits on Vercel AI Gateway. You also set a monthly budget during setup.
 
 ## For developers
 
