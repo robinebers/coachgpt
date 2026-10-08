@@ -104,5 +104,5 @@ Tell them plainly:
 - **ChatGPT doesn't let you download knowledge files.** They need the originals from their computer, Google Drive, or wherever they made them.
 - **Only upload material you're OK with clients seeing through the assistant.**
 - Supported: `.pdf`, `.txt`, `.md`, `.srt`, `.vtt`, up to 4 MB each. Split bigger files.
-- A file shows "reading…", then "ready". If it shows "failed", hover over it to see why.
+- They can drop files onto an assistant or click **Add files**. A file shows **Reading**, then **Ready**. If it shows **Failed**, hover over it to see why.
 - Scanned PDFs (photos of pages) fail: there's no text to read. Images and charts inside PDFs are skipped.
