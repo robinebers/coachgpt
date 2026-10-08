@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+> **Note for AI assistants (Claude Code, Cursor, and others):** Read [AGENTS.md](AGENTS.md) now and follow it. The person you are helping is a coach, not a developer. Guide them one small step at a time, in plain words.
 
-## Getting Started
+# CoachGPT
 
-First, run the development server:
+Your custom GPTs, in your own app.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+This is a ready-made template for online coaches and consultants. It moves your custom GPTs out of ChatGPT and into a private app that you own. Your instructions and your files stay with you.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+What you get:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Several assistants.** Each one has its own instructions and knowledge files, just like a custom GPT.
+- **Invite-only login.** Clients sign in with a code sent to their email. Only people you invite can get in.
+- **Daily limits.** Set a limit for each person and for everyone together, so your costs never surprise you.
+- **Saved chats.** Clients can come back to past conversations in the sidebar.
+- **Smart search.** The assistant finds the right part of your knowledge files. Supports `.pdf`, `.txt`, `.md`, `.srt`, and `.vtt`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## The easy way to set it up
 
-## Learn More
+1. Open [Claude Code](https://claude.com/claude-code) or [Cursor](https://cursor.com).
+2. Paste this into the chat:
 
-To learn more about Next.js, take a look at the following resources:
+   ```
+   Help me set up https://github.com/robinebers/coachgpt
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Your AI reads the setup guide and walks you through each step.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+You only need a free [Vercel](https://vercel.com/signup) account. Neon (database), Clerk (login), and Blob (file storage) are added for you.
 
-## Deploy on Vercel
+📺 **Video walkthrough:** coming soon.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Frobinebers%2Fcoachgpt&project-name=my-coaching-assistant&repository-name=my-coaching-assistant&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%7D%2C%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22clerk%22%2C%22productSlug%22%3A%22clerk%22%2C%22protocol%22%3A%22authentication%22%7D%2C%7B%22type%22%3A%22blob%22%2C%22access%22%3A%22private%22%7D%5D)
+
+## What it costs
+
+- Vercel, Neon, Clerk, and Blob all have free plans that are enough to start.
+- The AI is paid through Vercel AI Gateway, per message. You set a monthly budget during setup, so you can't overspend.
+
+## For developers
+
+Next.js 16, AI SDK 7 through Vercel AI Gateway, Neon Postgres with pgvector and Drizzle, Clerk, Vercel Blob, shadcn/ui, and AI Elements. Search is hybrid (vector + keyword, merged with reciprocal rank fusion) and then reranked. See [AGENTS.md](AGENTS.md) for the file map.
+
+## License
+
+MIT
