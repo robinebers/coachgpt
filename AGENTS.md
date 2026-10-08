@@ -15,7 +15,7 @@ You are helping a coach or consultant set up and run this app. It is their own p
 
 - Each **assistant** is like one custom GPT. It has a name, a short description, conversation starters, instructions, and knowledge files.
 - **Clients** sign in with an email and a password the coach gives them. Only people the coach adds can get in. The app sends no emails: if a client forgets their password, the coach makes a new one on `/admin`.
-- The **admin page** (`/admin`) is where the coach uploads knowledge files, adds clients, resets passwords, and sees today's usage. Only emails in `adminEmails` in `coach.config.ts` can open it.
+- The **admin page** (`/admin`) is where the coach uploads knowledge files, adds and edits clients, and resets passwords. Only emails in `adminEmails` in `coach.config.ts` can open it.
 - It runs on **Vercel**, with **Neon** (database, which also keeps the logins), **Vercel Blob** (file storage), and **Vercel AI Gateway** (the AI).
 
 ## Setup checklist
@@ -132,6 +132,7 @@ Change a model only if they ask for it. Before you change it:
 | "Add an assistant" | follow "Move a custom GPT over" |
 | "Add a client" | they do it on the `/admin` page. They get a password to send the client. |
 | "A client forgot their password" | they click **Reset password** on `/admin` and send the new one. The old one stops working right away. |
+| "Change a client's name or email" | they edit the row on `/admin` and click **Save**. |
 | "Remove a client" | they click **Remove** on `/admin`. That client's chats are deleted too. |
 | "Send 'forgot password' emails" | not built in. It needs an email sender: their Gmail with an app password (no website needed), or Resend from the Vercel Marketplace (needs their own website address and DNS records). Then use `sendResetPassword` in `lib/auth.ts` with a link you build from its `token` (there's no `/api/auth` route), plus a reset page whose server action calls `auth.api.resetPassword`. |
 | "Change colors" | the CSS variables in `app/globals.css` |
@@ -147,7 +148,8 @@ After any change: run `pnpm typecheck` and `pnpm lint`, fix any problems, then c
 - Never ask for secrets in chat. Never print secrets in your replies.
 - No provider API keys (like an OpenAI key). The AI runs through Vercel AI Gateway, which logs in by itself on Vercel. Locally, `vercel env pull .env.local` gets a token. It expires after about 12 hours, so pull again if AI calls start failing.
 - Prefer changing `coach.config.ts` and `assistants/` over the engine room below. Only change the engine room when they ask for something new.
-- To delete an assistant, delete its knowledge files on `/admin` **first**, then remove the code.
+- To delete an assistant, delete its knowledge files on `/admin` **first**, then remove the code. Its old chats disappear from the sidebar.
+- Never change an assistant's slug once clients use it: its chats and knowledge files are tied to it. To rename it, change `name` only.
 
 ## Running it on their computer (only if needed)
 
@@ -162,8 +164,7 @@ Then open http://localhost:3000.
 
 ## Engine room (for you, not for them)
 
-- `app/(chat)/`: the sidebar layout, the home page (assistant picker), and the chat pages
-- `app/admin/`: upload, file status, clients (add, reset password, remove), today's usage, plus server actions
+- `app/(app)/`: the one sidebar layout, the home page (assistant picker), the chat pages, and `admin/` (upload, file status, clients, plus server actions)
 - `app/sign-in/`: the sign-in page. While there are no accounts at all, it shows the coach's first-time screen. An admin's first sign-in creates their account (`actions.ts`).
 - `assistants/index.ts`: the list of assistants. Each key is the web address. Instructions are imported as text (see the `*.md` rule in `next.config.ts`) and never sent to the browser.
 - `app/api/chat/route.ts`: counts the message against the limits, streams the reply, saves messages. Admin messages are not counted.

@@ -49,7 +49,7 @@ export async function AppSidebar() {
           <SidebarGroupLabel>Chats</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {chats.map((chat) => (
+              {chats.filter((chat) => chat.assistantSlug in assistants).map((chat) => (
                 <SidebarMenuItem key={chat.id}>
                   <SidebarMenuButton render={<Link href={`/${chat.assistantSlug}/${chat.id}`} />}>
                     <span>{chat.title}</span>

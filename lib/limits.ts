@@ -1,27 +1,12 @@
-import { eq, sql, sum } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { coachConfig } from "@/coach.config";
 import { db, usage } from "@/lib/db";
-
-// Days are counted in UTC.
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-export async function getUsageToday() {
-  const [row] = await db
-    .select({
-      messages: sum(usage.messages).mapWith(Number),
-      people: sql<number>`count(*)`.mapWith(Number),
-    })
-    .from(usage)
-    .where(eq(usage.day, today()));
-  return { messages: row?.messages ?? 0, people: row?.people ?? 0 };
-}
 
 export async function countMessage(userId: string) {
   const counted = await db
     .insert(usage)
-    .values({ userId, day: today(), messages: 1 })
+    // Days are counted in UTC.
+    .values({ userId, day: new Date().toISOString().slice(0, 10), messages: 1 })
     .onConflictDoUpdate({
       target: [usage.userId, usage.day],
       set: { messages: sql`${usage.messages} + 1` },

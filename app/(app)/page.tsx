@@ -12,7 +12,7 @@ export default async function Home() {
         <h1 className="font-semibold text-2xl">{coachConfig.appName}</h1>
         <p className="text-muted-foreground">{coachConfig.tagline}</p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="flex flex-col gap-3">
         {Object.entries(assistants).map(([slug, assistant]) => (
           <Link key={slug} href={`/${slug}`}>
             <Card className="h-full transition-colors hover:bg-muted">
