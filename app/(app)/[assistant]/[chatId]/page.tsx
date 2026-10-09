@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getAssistant } from "@/assistants";
 import { Chat } from "@/components/chat";
 import { getUser } from "@/lib/auth";
-import { getChatFor, getMessages, withoutToolParts } from "@/lib/chats";
+import { getChatFor, getMessages, withSearchCounts } from "@/lib/chats";
 
 export default async function ChatPage({ params }: PageProps<"/[assistant]/[chatId]">) {
   const { assistant: slug, chatId } = await params;
@@ -15,7 +15,7 @@ export default async function ChatPage({ params }: PageProps<"/[assistant]/[chat
     <Chat
       id={chat.id}
       assistant={assistant}
-      initialMessages={withoutToolParts(await getMessages(chat.id))}
+      initialMessages={withSearchCounts(await getMessages(chat.id))}
       readOnly={chat.access === "reader" ? { ownerId: chat.userId, ownerName: chat.ownerName } : undefined}
     />
   );

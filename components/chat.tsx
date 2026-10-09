@@ -1,7 +1,8 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type UIMessage } from "ai";
+import { math } from "@streamdown/math";
+import { DefaultChatTransport, isStaticToolUIPart, type UIMessage } from "ai";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -19,9 +20,9 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
-import { Reasoning, ReasoningContent, ReasoningTrigger } from "@/components/ai-elements/reasoning";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
+import { Tool, ToolContent, ToolHeader, ToolInput, ToolOutput } from "@/components/ai-elements/tool";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -57,25 +58,23 @@ export function Chat({ id, assistant, initialMessages, readOnly }: ChatProps) {
   }
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-3xl flex-col p-4">
+    <div className="flex h-full flex-col">
       <Conversation className="flex-1">
-        <ConversationContent>
+        <ConversationContent className="mx-auto w-full max-w-3xl">
           {messages.length === 0 ? (
             <ConversationEmptyState title={assistant.name} description={assistant.description} />
           ) : (
             messages.map((message) => (
-              <ChatMessage key={message.id} message={message} thinking={thinking && message === last} />
+              <ChatMessage key={message.id} message={message} />
             ))
           )}
-          {thinking && !(last?.role === "assistant" && thoughtsOf(last)) && (
-            <Shimmer className="text-sm">Thinking...</Shimmer>
-          )}
+          {thinking && <Shimmer className="text-sm">Thinking...</Shimmer>}
           {error && <p className="text-destructive text-sm">{error.message}</p>}
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
 
-      <div className="flex flex-col gap-3">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 p-4 pt-0">
         {readOnly ? (
           <div className="flex items-center gap-3 rounded-lg border bg-muted px-3 py-2 text-sm">
             <p className="min-w-0 flex-1 text-muted-foreground">
@@ -113,36 +112,42 @@ export function Chat({ id, assistant, initialMessages, readOnly }: ChatProps) {
   );
 }
 
-function thoughtsOf(message: UIMessage) {
-  return message.parts.flatMap((part) => (part.type === "reasoning" && part.text ? [part.text] : [])).join("\n\n");
-}
+const plugins = { math };
 
-function ChatMessage({ message, thinking }: { message: UIMessage; thinking: boolean }) {
-  const thoughts = thoughtsOf(message);
-
+function ChatMessage({ message }: { message: UIMessage }) {
   return (
     <Message from={message.role}>
       <MessageContent>
-        {thoughts && (
-          <Reasoning isStreaming={thinking}>
-            <ReasoningTrigger
-              getThinkingMessage={(streaming, seconds) =>
-                streaming ? (
-                  <Shimmer duration={1}>Thinking...</Shimmer>
-                ) : seconds && seconds > 1 ? (
-                  `Thought for ${seconds} seconds`
-                ) : (
-                  "Show thinking"
-                )
-              }
-            />
-            <ReasoningContent>{thoughts}</ReasoningContent>
-          </Reasoning>
-        )}
         {message.parts.map((part, index) =>
-          part.type === "text" ? <MessageResponse key={index}>{part.text}</MessageResponse> : null,
+          part.type === "text" ? (
+            <MessageResponse key={index} plugins={plugins}>
+              {withMathDelimiters(part.text)}
+            </MessageResponse>
+          ) : isStaticToolUIPart(part) ? (
+            <Tool key={index}>
+              <ToolHeader type={part.type} state={part.state} title="Searched the coach's knowledge" />
+              <ToolContent>
+                <ToolInput input={part.input} />
+                <ToolOutput output={part.output} errorText={part.errorText} />
+              </ToolContent>
+            </Tool>
+          ) : null,
         )}
       </MessageContent>
     </Message>
   );
+}
+
+// Models often write \[ \] and \( \) math, which remark-math doesn't parse. Code is left alone.
+function withMathDelimiters(text: string) {
+  return text
+    .split(/(```[\s\S]*?```|`[^`\n]*`)/)
+    .map((piece, index) =>
+      index % 2
+        ? piece
+        : piece
+            .replace(/\\\[([\s\S]+?)\\\]/g, (_, tex: string) => `\n\n$$\n${tex.trim()}\n$$\n\n`)
+            .replace(/\\\(([\s\S]+?)\\\)/g, (_, tex: string) => `$$${tex.trim()}$$`),
+    )
+    .join("");
 }

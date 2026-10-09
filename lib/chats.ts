@@ -1,4 +1,4 @@
-import type { UIMessage } from "ai";
+import { isToolUIPart, type UIMessage } from "ai";
 import { asc, desc, eq, getTableColumns } from "drizzle-orm";
 import { chats, db, messages, user } from "@/lib/db";
 
@@ -34,12 +34,21 @@ export async function getMessages(chatId: string): Promise<UIMessage[]> {
   return rows.map(({ id, role, parts }) => ({ id, role, parts }));
 }
 
-// Tool results hold the coach's knowledge files word for word, so they never reach the browser.
-export function withoutToolParts(messages: UIMessage[]): UIMessage[] {
+// Search results hold the coach's knowledge files word for word. Only the query and the
+// excerpt count go to the browser or back to the model on later turns.
+export function withSearchCounts(messages: UIMessage[]): UIMessage[] {
   return messages.map((message) => ({
     ...message,
-    parts: message.parts.filter((part) => !part.type.startsWith("tool-") && part.type !== "dynamic-tool"),
+    parts: message.parts.flatMap((part): UIMessage["parts"] => {
+      if (!isToolUIPart(part)) return [part];
+      if (part.state !== "output-available") return [];
+      return [{ ...part, output: excerptCount(part.output), callProviderMetadata: undefined }];
+    }),
   }));
+}
+
+export function excerptCount(output: unknown) {
+  return { excerpts: Array.isArray(output) ? output.length : 0 };
 }
 
 export async function saveMessage(chatId: string, { id, role, parts }: UIMessage) {

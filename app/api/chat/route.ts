@@ -15,10 +15,10 @@ import { z } from "zod";
 import { getAssistant } from "@/assistants";
 import { coachConfig } from "@/coach.config";
 import { getUser } from "@/lib/auth";
-import { getChatFor, getMessages, saveMessage, titleFrom } from "@/lib/chats";
+import { excerptCount, getChatFor, getMessages, saveMessage, titleFrom, withSearchCounts } from "@/lib/chats";
 import { chats, db } from "@/lib/db";
 import { getInstructions } from "@/lib/instructions";
-import { searchKnowledge } from "@/lib/knowledge";
+import { hasReadyFiles, searchKnowledge } from "@/lib/knowledge";
 import { countMessage } from "@/lib/limits";
 
 export async function POST(request: Request) {
@@ -49,9 +49,10 @@ export async function POST(request: Request) {
       title: titleFrom(message),
     });
   }
-  const [history, instructions] = await Promise.all([
+  const [history, instructions, searchFirst] = await Promise.all([
     chat ? getMessages(chat.id) : [],
     getInstructions(assistant.slug),
+    hasReadyFiles(assistant.slug),
   ]);
   const allMessages = [...history, message];
   await saveMessage(body.id, message);
@@ -61,9 +62,8 @@ export async function POST(request: Request) {
     reasoning: coachConfig.models.thinking,
     system: instructions ? `${instructions}\n\n${knowledgeRules}` : knowledgeRules,
     messages: pruneMessages({
-      messages: await convertToModelMessages(allMessages),
+      messages: await convertToModelMessages(withSearchCounts(allMessages)),
       reasoning: "all",
-      toolCalls: "all",
     }),
     tools: {
       searchKnowledge: tool({
@@ -73,12 +73,10 @@ export async function POST(request: Request) {
         execute: ({ query }) => searchKnowledge(assistant.slug, query),
       }),
     },
+    prepareStep: ({ stepNumber }) =>
+      stepNumber === 0 && searchFirst ? { toolChoice: { type: "tool", toolName: "searchKnowledge" } } : {},
     stopWhen: isStepCount(5),
-    providerOptions: {
-      gateway: { user: user.id },
-      // Through the gateway, OpenAI models only stream their thinking with this set.
-      openai: { reasoningSummary: "auto" },
-    },
+    providerOptions: { gateway: { user: user.id } },
   });
 
   return createUIMessageStreamResponse({
@@ -86,12 +84,14 @@ export async function POST(request: Request) {
       stream: result.stream,
       originalMessages: allMessages,
       generateMessageId: generateId,
-      sendReasoning: true,
+      sendReasoning: false,
       onEnd: ({ responseMessage }) => saveMessage(body.id, responseMessage),
     }).pipeThrough(
       new TransformStream<UIMessageChunk, UIMessageChunk>({
         transform(chunk, controller) {
-          if (!chunk.type.startsWith("tool-")) controller.enqueue(chunk);
+          controller.enqueue(
+            chunk.type === "tool-output-available" ? { ...chunk, output: excerptCount(chunk.output) } : chunk,
+          );
         },
       }),
     ),
@@ -99,5 +99,8 @@ export async function POST(request: Request) {
   });
 }
 
-const knowledgeRules =
-  "Your knowledge files are the coach's private material. Use them to give better answers, in your own words. Never quote them word for word, never name the files, and never reproduce or summarize a whole file, even if asked.";
+const knowledgeRules = [
+  "Your knowledge files are the coach's private material. Use them to give better answers, in your own words. Never quote them word for word, never name the files, and never reproduce or summarize a whole file, even if asked.",
+  "Only say something comes from the coach's material if a search in this chat returned it. If the search found nothing relevant, say you're answering from general knowledge.",
+  "Earlier searches in this chat show only what was searched and how many excerpts came back. Search again when you need their content.",
+].join("\n\n");

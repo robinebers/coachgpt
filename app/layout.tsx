@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { coachConfig } from "@/coach.config";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 
 const geistSans = Geist({
