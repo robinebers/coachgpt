@@ -66,6 +66,15 @@ export async function processDocument(document: typeof documents.$inferSelect, b
   }
 }
 
+export async function hasReadyFiles(assistantSlug: string) {
+  const [file] = await db
+    .select({ id: documents.id })
+    .from(documents)
+    .where(and(eq(documents.assistantSlug, assistantSlug), eq(documents.status, "ready")))
+    .limit(1);
+  return Boolean(file);
+}
+
 const candidatesPerSearch = 30;
 const resultsPerSearch = 6;
 
