@@ -13,17 +13,20 @@ import {
 } from "ai";
 import { getAssistant } from "@/assistants";
 import { coachConfig } from "@/coach.config";
+import { withImageData } from "@/lib/attachments";
 import { getUser } from "@/lib/auth";
 import {
   excerptCount,
   getChatFor,
   getMessages,
+  nameChat,
+  readUserMessage,
   saveMessage,
+  saveUserMessage,
   searchKnowledgeInput,
-  titleFrom,
   withSearchCounts,
 } from "@/lib/chats";
-import { chats, db } from "@/lib/db";
+import { maxImageMB, maxImagesPerMessage } from "@/lib/file-types";
 import { getInstructions } from "@/lib/instructions";
 import { hasReadyFiles, searchKnowledge } from "@/lib/knowledge";
 import { countMessage } from "@/lib/limits";
@@ -39,37 +42,38 @@ export async function POST(request: Request) {
   const assistant = getAssistant(chat?.assistantSlug ?? body.assistant);
   if (!assistant) return new Response("Unknown assistant", { status: 404 });
 
+  const input = readUserMessage(body.message.parts);
+  if (!input) {
+    return new Response(
+      `Send a message, or up to ${maxImagesPerMessage} PNG, JPEG, WebP or GIF images of ${maxImageMB} MB each.`,
+      { status: 400 },
+    );
+  }
+
   const limitMessage = user.isAdmin ? null : await countMessage(user.id);
   if (limitMessage) return new Response(limitMessage, { status: 429 });
 
-  const text = body.message.parts
-    .flatMap((part) => (part.type === "text" ? [part.text] : []))
-    .join("\n")
-    .slice(0, 8000);
-  const message: UIMessage = { id: body.message.id, role: "user", parts: [{ type: "text", text }] };
-
-  if (!chat) {
-    await db.insert(chats).values({
-      id: body.id,
-      userId: user.id,
-      assistantSlug: assistant.slug,
-      title: titleFrom(message),
-    });
-  }
   const [history, instructions, searchFirst] = await Promise.all([
     chat ? getMessages(chat.id) : [],
     getInstructions(assistant.slug),
     hasReadyFiles(assistant.slug),
   ]);
+  const message = await saveUserMessage(
+    { id: body.id, userId: user.id, assistantSlug: assistant.slug },
+    body.message.id,
+    input,
+  );
   const allMessages = [...history, message];
-  await saveMessage(body.id, message);
+  const naming = !chat && input.text ? nameChat(body.id, input.text, user.id) : undefined;
 
   const result = streamText({
     model: coachConfig.models.chat,
     reasoning: coachConfig.models.thinking,
-    system: instructions ? `${instructions}\n\n${knowledgeRules}` : knowledgeRules,
+    system: [`You are ${assistant.name}, an assistant in ${coachConfig.appName}.`, instructions, knowledgeRules]
+      .filter(Boolean)
+      .join("\n\n"),
     messages: pruneMessages({
-      messages: await convertToModelMessages(withSearchCounts(allMessages)),
+      messages: await convertToModelMessages(withSearchCounts(await withImageData(body.id, allMessages))),
       reasoning: "all",
     }),
     tools: {
@@ -92,7 +96,14 @@ export async function POST(request: Request) {
       originalMessages: allMessages,
       generateMessageId: generateId,
       sendReasoning: false,
-      onEnd: ({ responseMessage }) => saveMessage(body.id, responseMessage),
+      onError: (error) =>
+        user.isAdmin && error instanceof Error
+          ? error.message
+          : "The assistant can't answer right now. Try again in a minute. If it keeps happening, tell your coach.",
+      // The stream closes after this, and the browser then refreshes the sidebar, so the new title shows right away.
+      onEnd: async ({ responseMessage }) => {
+        await Promise.all([saveMessage(body.id, responseMessage), naming]);
+      },
     }).pipeThrough(
       new TransformStream<UIMessageChunk, UIMessageChunk>({
         transform(chunk, controller) {

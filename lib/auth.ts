@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { cache } from "react";
 import { coachConfig } from "@/coach.config";
 import { db } from "@/lib/db";
 
@@ -38,12 +39,13 @@ export async function setPassword(userId: string, password: string) {
   await ctx.internalAdapter.deleteUserSessions(userId);
 }
 
-export async function getUser() {
+// Cached per request: the layout, sidebar and page each ask.
+export const getUser = cache(async () => {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/sign-in");
   const { id, name, email } = session.user;
   return { id, name, email, isAdmin: isAdminEmail(email) };
-}
+});
 
 export async function requireAdmin() {
   const user = await getUser();

@@ -22,6 +22,10 @@ const tsvector = customType<{ data: string }>({
   dataType: () => "tsvector",
 });
 
+const bytea = customType<{ data: Buffer }>({
+  dataType: () => "bytea",
+});
+
 export const chats = pgTable(
   "chats",
   {
@@ -49,6 +53,21 @@ export const messages = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [index("messages_chat_idx").on(t.chatId, t.createdAt)],
+);
+
+// Images clients send in chat. Messages link to them, so the messages table stays small.
+export const attachments = pgTable(
+  "attachments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    chatId: text("chat_id")
+      .notNull()
+      .references(() => chats.id, { onDelete: "cascade" }),
+    mediaType: text("media_type").notNull(),
+    data: bytea("data").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("attachments_chat_idx").on(t.chatId)],
 );
 
 export const documents = pgTable(

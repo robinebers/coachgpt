@@ -80,7 +80,7 @@ export function InstructionsButton(props: Props) {
     <Dialog open={open} onOpenChange={setOpen}>
       <Button variant="outline" onClick={() => setOpen(true)}>
         <ScrollTextIcon data-icon="inline-start" />
-        {props.instructions ? "Instructions" : "Add instructions"}
+        Instructions
       </Button>
       <DialogContent className="sm:max-w-2xl">
         <InstructionsForm {...props} onDone={() => setOpen(false)} />

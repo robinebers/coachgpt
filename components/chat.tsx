@@ -1,12 +1,14 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
+import { Chat as AIChat, useChat } from "@ai-sdk/react";
 import { math } from "@streamdown/math";
 import { DefaultChatTransport } from "ai";
-import { SearchIcon } from "lucide-react";
+import { ImagePlusIcon, SearchIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import type { Assistant } from "@/assistants/types";
 import {
   Conversation,
@@ -17,16 +19,23 @@ import { Message, MessageActions, MessageContent, MessageResponse } from "@/comp
 import {
   PromptInput,
   PromptInputBody,
+  PromptInputButton,
   PromptInputFooter,
+  PromptInputHeader,
+  type PromptInputMessage,
+  PromptInputProvider,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputTools,
+  usePromptInputAttachments,
 } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { CopyButton } from "@/components/copy-button";
 import { buttonVariants } from "@/components/ui/button";
 import type { ChatMessage } from "@/lib/chats";
+import { imageTypes, maxImagesPerMessage } from "@/lib/file-types";
+import { shrinkImage } from "@/lib/shrink-image";
 import { cn } from "@/lib/utils";
 
 type Part = ChatMessage["parts"][number];
@@ -39,41 +48,96 @@ type ChatProps = {
   readOnly?: { ownerId: string; ownerName: string };
 };
 
+// A new chat hands its running conversation to the chat page it moves to.
+let handoff: AIChat<ChatMessage> | undefined;
+
 export function Chat({ id, assistant, initialMessages, readOnly }: ChatProps) {
   const router = useRouter();
-  const { messages, sendMessage, status, stop, error } = useChat<ChatMessage>({
-    id,
-    messages: initialMessages,
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      prepareSendMessagesRequest: ({ id, messages }) => ({
-        body: { id, assistant: assistant.slug, message: messages.at(-1) },
-      }),
-    }),
-    onFinish: () => router.refresh(),
-  });
+  const address = `/${assistant.slug}/${id}`;
+  const [{ chat, handedOver }] = useState(() =>
+    handoff?.id === id
+      ? { chat: handoff, handedOver: true }
+      : {
+          chat: new AIChat<ChatMessage>({
+            id,
+            messages: initialMessages,
+            transport: new DefaultChatTransport({
+              api: "/api/chat",
+              prepareSendMessagesRequest: ({ id, messages }) => ({
+                body: { id, assistant: assistant.slug, message: messages.at(-1) },
+              }),
+            }),
+            // Only while this chat is on screen: refreshing a new-chat page would replace it, and anything typed there.
+            onFinish: () => {
+              if (window.location.pathname === address) router.refresh();
+            },
+          }),
+          handedOver: false,
+        },
+  );
+  const { messages, sendMessage, status, stop, error } = useChat({ chat });
+
+  // A new chat moves to its own page once the server has saved it. That page takes over this
+  // conversation mid-answer, so nothing reloads and Back and New chat see the real page.
+  useEffect(() => {
+    if (initialMessages.length === 0 && status === "streaming" && window.location.pathname === address) {
+      handoff = chat;
+      router.refresh();
+    }
+  }, [initialMessages.length, status, address, chat, router]);
+  useEffect(() => {
+    if (handedOver && handoff === chat) handoff = undefined;
+  }, [handedOver, chat]);
+
+  function start(message: Parameters<typeof sendMessage>[0]) {
+    if (messages.length === 0) window.history.replaceState(null, "", address);
+    return sendMessage(message);
+  }
 
   const busy = status === "submitted" || status === "streaming";
   const last = messages.at(-1);
   const lastPart = last?.role === "assistant" ? last.parts.at(-1) : undefined;
   const thinking = busy && lastPart?.type !== "text" && !isSearching(lastPart);
 
-  function send(text: string) {
-    if (!text.trim() || busy) return;
-    if (messages.length === 0) window.history.replaceState(null, "", `/${assistant.slug}/${id}`);
-    void sendMessage({ text });
+  // Stays true until the answer ends. `busy` lags a render behind, so a quick second Enter would get through.
+  const sending = useRef(false);
+
+  // Throwing keeps the text and images in the box, so nothing typed is lost.
+  async function send({ text, files }: PromptInputMessage) {
+    if (busy || sending.current) throw new Error("Still answering");
+    if (!text.trim() && files.length === 0) return;
+    sending.current = true;
+    const images = await Promise.all(files.map(shrinkImage)).catch((error) => {
+      sending.current = false;
+      toast.error("That image couldn't be used. Try a PNG or JPEG screenshot.");
+      throw error;
+    });
+    void start(text.trim() ? { text, files: images } : { files: images }).finally(() => {
+      sending.current = false;
+    });
   }
 
   const composer = (autoFocus: boolean) => (
-    <PromptInput onSubmit={({ text }) => send(text)}>
-      <PromptInputBody>
-        <PromptInputTextarea placeholder={`Message ${assistant.name}`} autoFocus={autoFocus} />
-      </PromptInputBody>
-      <PromptInputFooter>
-        <PromptInputTools />
-        <PromptInputSubmit status={status} onStop={stop} />
-      </PromptInputFooter>
-    </PromptInput>
+    <PromptInputProvider>
+      <PromptInput
+        accept={imageTypes.join(",")}
+        multiple
+        maxFiles={maxImagesPerMessage}
+        onError={({ code, message }) => toast.error(message, { id: code })}
+        onSubmit={send}
+      >
+        <ImagePreviews />
+        <PromptInputBody>
+          <PromptInputTextarea placeholder={`Message ${assistant.name}`} autoFocus={autoFocus} />
+        </PromptInputBody>
+        <PromptInputFooter>
+          <PromptInputTools>
+            <AddImagesButton />
+          </PromptInputTools>
+          <PromptInputSubmit status={status} onStop={stop} />
+        </PromptInputFooter>
+      </PromptInput>
+    </PromptInputProvider>
   );
 
   if (messages.length === 0 && !readOnly) {
@@ -89,7 +153,7 @@ export function Chat({ id, assistant, initialMessages, readOnly }: ChatProps) {
         {composer(true)}
         <Suggestions className="w-full flex-wrap justify-center">
           {assistant.starters.map((starter) => (
-            <Suggestion key={starter} suggestion={starter} onClick={send} />
+            <Suggestion key={starter} suggestion={starter} onClick={(text) => void start({ text })} />
           ))}
         </Suggestions>
       </div>
@@ -125,7 +189,8 @@ export function Chat({ id, assistant, initialMessages, readOnly }: ChatProps) {
             </Link>
           </div>
         ) : (
-          composer(false)
+          // Keeps the cursor in the box while a chat started on this screen gets going.
+          composer(initialMessages.length === 0 || handedOver)
         )}
       </div>
     </div>
@@ -147,6 +212,9 @@ function MessageRow({ message, streaming }: { message: ChatMessage; streaming: b
             </MessageResponse>
           ) : part.type === "tool-searchKnowledge" ? (
             <KnowledgeSearch key={index} part={part} streaming={streaming} />
+          ) : part.type === "file" && part.mediaType.startsWith("image/") ? (
+            // eslint-disable-next-line @next/next/no-img-element -- Next's image optimizer can't load these: they need the viewer's sign-in.
+            <img key={index} src={part.url} alt="" loading="lazy" className="max-h-64 max-w-full self-start rounded-md" />
           ) : null,
         )}
       </MessageContent>
@@ -156,6 +224,44 @@ function MessageRow({ message, streaming }: { message: ChatMessage; streaming: b
         </MessageActions>
       )}
     </Message>
+  );
+}
+
+function AddImagesButton() {
+  const attachments = usePromptInputAttachments();
+  return (
+    <PromptInputButton aria-label="Add images" title="Add images" onClick={attachments.openFileDialog}>
+      <ImagePlusIcon />
+    </PromptInputButton>
+  );
+}
+
+function ImagePreviews() {
+  const { files, remove } = usePromptInputAttachments();
+  if (files.length === 0) return null;
+  return (
+    <PromptInputHeader className="gap-2 pt-3">
+      {files.map((file) => (
+        <div key={file.id} className="relative">
+          <Image
+            src={file.url}
+            alt=""
+            width={56}
+            height={56}
+            unoptimized
+            className="size-14 rounded-md border object-cover"
+          />
+          <button
+            type="button"
+            aria-label="Remove image"
+            onClick={() => remove(file.id)}
+            className="-top-1.5 -right-1.5 absolute rounded-full border bg-background p-0.5 shadow-sm"
+          >
+            <XIcon className="size-3" />
+          </button>
+        </div>
+      ))}
+    </PromptInputHeader>
   );
 }
 

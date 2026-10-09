@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronsUpDownIcon, LogOutIcon } from "lucide-react";
+import { ChevronsUpDownIcon, LogOutIcon, SettingsIcon } from "lucide-react";
+import Link from "next/link";
 import { signOut } from "@/app/sign-in/actions";
 import {
   DropdownMenu,
@@ -8,9 +9,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SidebarMenuButton } from "@/components/ui/sidebar";
+import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
 
-export function NavUser({ name, email }: { name: string; email: string }) {
+export function NavUser({ name, email, isAdmin }: { name: string; email: string; isAdmin: boolean }) {
+  const { setOpenMobile } = useSidebar();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger render={<SidebarMenuButton size="lg" />}>
@@ -21,6 +23,12 @@ export function NavUser({ name, email }: { name: string; email: string }) {
         <ChevronsUpDownIcon className="ml-auto" />
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="start" className="w-(--anchor-width)">
+        {isAdmin && (
+          <DropdownMenuItem render={<Link href="/admin" onClick={() => setOpenMobile(false)} />}>
+            <SettingsIcon />
+            Admin
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={() => signOut()}>
           <LogOutIcon />
           Sign out

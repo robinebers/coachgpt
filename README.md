@@ -9,6 +9,7 @@ A template for coaches and consultants. It moves your custom GPTs out of ChatGPT
 - **Several assistants**, each with its own instructions and knowledge files, like a custom GPT.
 - **Invite-only.** You add each client and get a password to send them.
 - **Limits.** A daily message limit per client, plus a monthly AI budget as a safety net.
+- **Images.** Clients can paste or attach screenshots in chat.
 - **Saved chats.** Clients come back to past chats. You can read any client's chats from the admin page.
 - **Knowledge search** in `.pdf`, `.txt`, `.md`, `.srt`, and `.vtt` files, up to 4 MB each.
 

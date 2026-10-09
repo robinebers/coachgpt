@@ -29,6 +29,13 @@
       "when": 1791450775251,
       "tag": "0003_assistant-instructions",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791545531956,
+      "tag": "0004_chat-images",
+      "breakpoints": true
     }
   ]
 }

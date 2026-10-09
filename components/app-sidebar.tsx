@@ -1,4 +1,3 @@
-import { SettingsIcon } from "lucide-react";
 import Image from "next/image";
 import { assistants } from "@/assistants";
 import { coachConfig } from "@/coach.config";
@@ -16,7 +15,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { getUser } from "@/lib/auth";
-import { listChats } from "@/lib/chats";
+import type { listChats } from "@/lib/chats";
 
 const dayMs = 24 * 60 * 60 * 1000;
 
@@ -33,9 +32,8 @@ function groupByDate<T extends { updatedAt: Date }>(chats: T[]) {
   return groups.filter((group) => group.chats.length > 0);
 }
 
-export async function AppSidebar() {
+export async function AppSidebar({ chats }: { chats: Awaited<ReturnType<typeof listChats>> }) {
   const user = await getUser();
-  const chats = (await listChats(user.id, 100)).filter((chat) => chat.assistantSlug in assistants);
 
   return (
     <Sidebar>
@@ -78,20 +76,10 @@ export async function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter className="gap-3">
-        {user.isAdmin && (
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <NavLink href="/admin">
-                <SettingsIcon />
-                <span>Admin</span>
-              </NavLink>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        )}
+      <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <NavUser name={user.name} email={user.email} />
+            <NavUser name={user.name} email={user.email} isAdmin={user.isAdmin} />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

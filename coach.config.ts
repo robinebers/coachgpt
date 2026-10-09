@@ -7,7 +7,7 @@ export const coachConfig: CoachConfig = {
   adminEmails: ["test@replace.me"],
   messagesPerClientPerDay: 50,
   models: {
-    chat: "openai/gpt-6.1-sol",
+    chat: "anthropic/claude-haiku-5.5",
     thinking: "medium",
     embedding: "voyage/voyage-4",
     reranker: "voyage/rerank-3",
