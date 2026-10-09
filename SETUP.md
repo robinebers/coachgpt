@@ -14,10 +14,9 @@ Run `gh auth status` and `vercel whoami`. If one isn't signed in, run `gh auth l
 
 - **git:** if `git --version` fails (likely on Windows), run `winget install --id Git.Git -e`. They click **Yes** if Windows asks, then quit and reopen this AI app so it finds git.
 - Run `gh auth setup-git`, so git uses their GitHub login.
-- If `pnpm` is missing, run `npm install -g pnpm`.
 - Update the Vercel CLI, since the commands below are new: `npm install -g vercel@latest` (or `brew upgrade vercel-cli` if Homebrew installed it).
 
-**Check:** both accounts show as signed in, `git --version` and `pnpm --version` work, `node --version` is 22 or newer, and `vercel ai-gateway budgets --help` lists `set` and `inspect`.
+**Check:** both accounts show as signed in, `git --version` and `npm --version` work, `node --version` is 22 or newer, and `vercel ai-gateway budgets --help` lists `set` and `inspect`.
 
 ## 2. Ask four things
 
@@ -34,7 +33,7 @@ cd my-coaching-assistant
 gh api user --jq '.id, .login, .name'
 git config user.name "<their name, or login if name is empty or null>"
 git config user.email "<id>+<login>@users.noreply.github.com"
-pnpm install
+npm install
 vercel link --yes
 vercel git connect --yes
 vercel install neon --plan free_v3

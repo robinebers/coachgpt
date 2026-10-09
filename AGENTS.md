@@ -39,14 +39,14 @@ You are helping a coach or consultant run this app: their own private version of
 - Never push with `test@replace.me` (or any address the coach doesn't own) in `adminEmails`: anyone could claim admin with it.
 - No provider API keys. The AI runs through Vercel AI Gateway. Locally, the token from `vercel env pull` lasts about 12 hours; pull again if AI calls fail.
 - Every new page, route, or server action must call `getUser()` or `requireAdmin()` from `lib/auth.ts`. Don't add an `/api/auth` route. Keep tool results and assistant instructions out of the browser.
-- After a schema change in `lib/db/schema.ts`, run `pnpm db:generate`. Migrations run on every Vercel build.
+- After a schema change in `lib/db/schema.ts`, run `npm run db:generate`. Migrations run on every Vercel build.
 - Don't edit `components/ui/`, `components/ai-elements/`, or `hooks/` (copied library code).
 
 ## Shipping a change
 
 Pushing to `main` updates the live app their clients use. So:
 
-1. Run `pnpm typecheck` and `pnpm lint`, and fix any problems.
+1. Run `npm run typecheck` and `npm run lint`, and fix any problems.
 2. Tell them what will change, then commit and push.
 3. Wait until `vercel ls` shows the new deployment **Ready**. If it shows **Error**, read `vercel inspect <url> --logs`, fix it, and push again.
 
