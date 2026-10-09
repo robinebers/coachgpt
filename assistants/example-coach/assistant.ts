@@ -1,4 +1,5 @@
 import type { Assistant } from "../types";
+import avatar from "./avatar.png";
 
 export default {
   name: "Example Coach",
@@ -8,4 +9,5 @@ export default {
     "Plan my week with me",
     "I feel stuck. Where do I start?",
   ],
+  avatar,
 } satisfies Assistant;

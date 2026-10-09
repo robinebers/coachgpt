@@ -13,10 +13,10 @@ You are helping a coach or consultant run this app: their own private version of
 
 ## What this app is
 
-- Each **assistant** is one custom GPT: name, description and starters in `assistants/<slug>/assistant.ts`; instructions and knowledge files on Admin.
+- Each **assistant** is one custom GPT: name, description, starters and avatar in `assistants/<slug>/`; instructions and knowledge files on Admin.
 - **Clients** sign in with an email and a password the coach makes on Admin. The app sends no emails.
 - **Admins** are the emails in `adminEmails` in `coach.config.ts`. They manage files and clients and can read every chat, but only a chat's owner can reply.
-- Settings (name, tagline, daily limit, models) are in `coach.config.ts`.
+- Settings (name, tagline, brand colors, daily limit, models) are in `coach.config.ts`. The rest of the theme is in `app/globals.css`.
 - Runs on Vercel, with Neon (database) and Vercel AI Gateway (the AI). One database serves the live app and local runs, so local testing changes real data.
 
 ## Common requests

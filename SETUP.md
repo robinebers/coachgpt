@@ -38,7 +38,7 @@ Traps:
 
 ## 4. Configure and deploy
 
-In `coach.config.ts`, put their email in `adminEmails` (replacing `test@replace.me`) and set `appName` and `messagesPerClientPerDay`. Ship it (see AGENTS.md).
+In `coach.config.ts`, put their email in `adminEmails` (replacing `test@replace.me`) and set `appName`, `colors` (their two brand colors) and `messagesPerClientPerDay`. Ship it (see AGENTS.md).
 
 No deployment, or "Deployment Blocked": the commit email is wrong. Fix it and push an empty commit. Still blocked: they connect GitHub in Vercel under **Account Settings → Authentication**.
 
@@ -70,7 +70,7 @@ Ask: move a ChatGPT GPT over, or create a new one together? Then follow "Add an 
    - **New:** ask who it's for and what it should do. Draft the name, description, starters and instructions, and refine them together.
    - **From ChatGPT:** in **My GPTs**, they edit the GPT, open **Configure**, and paste its name, description, starters and instructions here. Flag what this app can't do: web browsing, images, code, Actions, naming sources.
 2. Pick a slug: the name in small letters with dashes, like `sales-coach`. It's the address and can never change.
-3. Copy `assistants/example-coach/` to `assistants/<slug>/`, fill it in, and register it in `assistants/index.ts`. Offer to remove the example coach.
+3. Copy `assistants/example-coach/` to `assistants/<slug>/`, fill it in, and register it in `assistants/index.ts`. Replace `avatar.png` with a square image of their choice (offer to make one). Offer to remove the example coach.
 4. Ship it.
 5. On Admin, they paste the instructions under **Instructions**, then upload knowledge files.
 

@@ -4,6 +4,7 @@ import { FileTextIcon, Trash2Icon, UploadIcon, XIcon } from "lucide-react";
 import { type DragEvent, type ReactNode, useState } from "react";
 import { type FileRejection, useDropzone } from "react-dropzone";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { IconButton } from "@/components/icon-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,9 +45,9 @@ export function DeleteFileButton({ id, name }: { id: string; name: string }) {
   const [confirming, setConfirming] = useState(false);
   return (
     <>
-      <Button variant="ghost" size="icon-sm" aria-label={`Delete ${name}`} onClick={() => setConfirming(true)}>
+      <IconButton label="Delete" aria-label={`Delete ${name}`} onClick={() => setConfirming(true)}>
         <Trash2Icon />
-      </Button>
+      </IconButton>
       <ConfirmDialog
         open={confirming}
         onOpenChange={setConfirming}
@@ -74,7 +75,7 @@ function FileStatus({
       </span>
     );
   }
-  if (status === "ready") return <Badge variant="secondary">Ready</Badge>;
+  if (status === "ready") return null;
   if (!error) return <Badge variant="destructive">Failed</Badge>;
   return (
     <Tooltip>
@@ -98,7 +99,7 @@ function FileRow({
   action?: ReactNode;
 }) {
   return (
-    <Item size="sm" className="flex-nowrap rounded-none px-0">
+    <Item size="sm" className="flex-nowrap rounded-none">
       <ItemMedia variant="icon">
         <FileTextIcon />
       </ItemMedia>
@@ -109,7 +110,7 @@ function FileRow({
       </ItemContent>
       <ItemActions className="shrink-0">
         <FileStatus status={status} error={error} />
-        {uploaded && <span className="text-muted-foreground text-xs">· {uploaded}</span>}
+        {uploaded && <span className="text-muted-foreground text-xs tabular-nums">{uploaded}</span>}
         {action}
       </ItemActions>
     </Item>
@@ -194,13 +195,14 @@ export function AssistantFiles({
         <CardAction className="flex gap-2">
           {action}
           <Button type="button" variant="outline" onClick={open}>
+            <UploadIcon data-icon="inline-start" />
             Add files
           </Button>
         </CardAction>
       </CardHeader>
       <CardContent>
         {hasRows ? (
-          <ItemGroup className="gap-0 divide-y">
+          <ItemGroup className="gap-0 divide-y divide-background rounded-lg bg-muted/60">
             {pending.map((item) => (
               <FileRow
                 key={item.id}
@@ -209,15 +211,14 @@ export function AssistantFiles({
                 error={item.state === "failed" ? item.error : undefined}
                 action={
                   item.state === "failed" ? (
-                    <Button
+                    <IconButton
                       type="button"
-                      variant="ghost"
-                      size="icon-sm"
+                      label="Dismiss"
                       aria-label={`Dismiss ${item.name}`}
                       onClick={() => setPending((current) => current.filter((row) => row.id !== item.id))}
                     >
                       <XIcon />
-                    </Button>
+                    </IconButton>
                   ) : undefined
                 }
               />

@@ -13,7 +13,7 @@ export default async function SignInPage() {
     <main className="flex flex-1 items-center justify-center p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <Image src="/logo.svg" alt="" width={40} height={40} className="mb-2 rounded-lg" />
+          <Image src="/logo.png" alt="" width={40} height={40} className="mb-2 rounded-full" />
           <CardTitle>{firstTime ? "Welcome! Pick your password" : "Sign in"}</CardTitle>
           <CardDescription>
             {firstTime

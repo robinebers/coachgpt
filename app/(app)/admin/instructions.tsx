@@ -4,7 +4,6 @@ import { ScrollTextIcon } from "lucide-react";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { maxInstructionsLength } from "@/assistants/types";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -79,10 +78,9 @@ export function InstructionsButton(props: Props) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {!props.instructions && <Badge variant="outline" className="self-center">No instructions</Badge>}
       <Button variant="outline" onClick={() => setOpen(true)}>
         <ScrollTextIcon data-icon="inline-start" />
-        Instructions
+        {props.instructions ? "Instructions" : "Add instructions"}
       </Button>
       <DialogContent className="sm:max-w-2xl">
         <InstructionsForm {...props} onDone={() => setOpen(false)} />

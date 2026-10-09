@@ -1,6 +1,8 @@
 export const coachConfig: CoachConfig = {
-  appName: "My Coaching Assistant",
+  appName: "Rob's CoachGPT Template",
   tagline: "Pick an assistant to start chatting.",
+  // Six-digit hex. Buttons use primary. Client messages and badges use secondary.
+  colors: { primary: "#0731f8", secondary: "#ffe25a" },
   // Placeholder. Replace with the coach's email during setup, or anyone can claim admin with it.
   adminEmails: ["test@replace.me"],
   messagesPerClientPerDay: 50,
@@ -15,6 +17,7 @@ export const coachConfig: CoachConfig = {
 type CoachConfig = {
   appName: string;
   tagline: string;
+  colors: { primary: string; secondary: string };
   adminEmails: string[];
   messagesPerClientPerDay: number;
   models: {

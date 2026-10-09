@@ -12,11 +12,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 
-export function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+export function NavLink({
+  href,
+  children,
+  size,
+}: {
+  href: string;
+  children: React.ReactNode;
+  size?: React.ComponentProps<typeof SidebarMenuButton>["size"];
+}) {
+  const { setOpenMobile } = useSidebar();
   return (
-    <SidebarMenuButton isActive={usePathname() === href} render={<Link href={href} />}>
+    <SidebarMenuButton
+      size={size}
+      isActive={usePathname() === href}
+      render={<Link href={href} onClick={() => setOpenMobile(false)} />}
+    >
       {children}
     </SidebarMenuButton>
   );

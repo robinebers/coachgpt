@@ -1,6 +1,5 @@
-import { MessageSquarePlusIcon, SettingsIcon } from "lucide-react";
+import { SettingsIcon } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { assistants } from "@/assistants";
 import { coachConfig } from "@/coach.config";
 import { ChatItem, NavLink } from "@/components/nav-links";
@@ -14,11 +13,25 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { getUser } from "@/lib/auth";
 import { listChats } from "@/lib/chats";
+
+const dayMs = 24 * 60 * 60 * 1000;
+
+// Days follow the server clock (UTC on Vercel).
+function groupByDate<T extends { updatedAt: Date }>(chats: T[]) {
+  const today = new Date().setUTCHours(0, 0, 0, 0);
+  const groups = [
+    { label: "Today", from: today, chats: [] as T[] },
+    { label: "Yesterday", from: today - dayMs, chats: [] as T[] },
+    { label: "Previous 7 days", from: today - 7 * dayMs, chats: [] as T[] },
+    { label: "Older", from: -Infinity, chats: [] as T[] },
+  ];
+  for (const chat of chats) groups.find((group) => chat.updatedAt.getTime() >= group.from)?.chats.push(chat);
+  return groups.filter((group) => group.chats.length > 0);
+}
 
 export async function AppSidebar() {
   const user = await getUser();
@@ -29,10 +42,10 @@ export async function AppSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href="/" />}>
-              <Image src="/logo.svg" alt="" width={32} height={32} className="rounded-lg" />
+            <NavLink href="/" size="lg">
+              <Image src="/logo.png" alt="" width={32} height={32} className="rounded-full" />
               <span className="truncate font-semibold">{coachConfig.appName}</span>
-            </SidebarMenuButton>
+            </NavLink>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -44,7 +57,7 @@ export async function AppSidebar() {
               {Object.entries(assistants).map(([slug, assistant]) => (
                 <SidebarMenuItem key={slug}>
                   <NavLink href={`/${slug}`}>
-                    <MessageSquarePlusIcon />
+                    <Image src={assistant.avatar} alt="" width={20} height={20} className="rounded-full" />
                     <span>{assistant.name}</span>
                   </NavLink>
                 </SidebarMenuItem>
@@ -52,29 +65,31 @@ export async function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        {chats.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Chats</SidebarGroupLabel>
+        {groupByDate(chats).map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {chats.map((chat) => (
+                {group.chats.map((chat) => (
                   <ChatItem key={chat.id} chat={chat} />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        )}
+        ))}
       </SidebarContent>
-      <SidebarFooter>
-        <SidebarMenu>
-          {user.isAdmin && (
+      <SidebarFooter className="gap-3">
+        {user.isAdmin && (
+          <SidebarMenu>
             <SidebarMenuItem>
               <NavLink href="/admin">
                 <SettingsIcon />
                 <span>Admin</span>
               </NavLink>
             </SidebarMenuItem>
-          )}
+          </SidebarMenu>
+        )}
+        <SidebarMenu>
           <SidebarMenuItem>
             <NavUser name={user.name} email={user.email} />
           </SidebarMenuItem>

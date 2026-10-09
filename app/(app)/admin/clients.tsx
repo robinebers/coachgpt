@@ -1,10 +1,11 @@
 "use client";
 
-import { CheckIcon, CopyIcon, MoreHorizontalIcon } from "lucide-react";
+import { MoreHorizontalIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { CopyButton, useCopy } from "@/components/copy-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,24 +84,12 @@ function ClientForm({ client, onSaved }: { client?: Client; onSaved: (signIn?: S
   );
 }
 
-function CopyButton({ text, label, children }: { text: string; label: string; children?: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  const Icon = copied ? CheckIcon : CopyIcon;
-  return children ? (
+function CopyAllButton({ text }: { text: string }) {
+  const { copied, copy, Icon } = useCopy(text);
+  return (
     <Button onClick={copy}>
       <Icon data-icon="inline-start" />
-      {copied ? "Copied" : children}
-    </Button>
-  ) : (
-    <Button variant="ghost" size="icon-sm" aria-label={label} onClick={copy}>
-      <Icon />
+      {copied ? "Copied" : "Copy all"}
     </Button>
   );
 }
@@ -133,9 +122,7 @@ function SignInDetails({ signIn }: { signIn: SignIn }) {
       </dl>
       <DialogFooter>
         <DialogClose render={<Button variant="outline" />}>Done</DialogClose>
-        <CopyButton text={message} label="Copy all">
-          Copy all
-        </CopyButton>
+        <CopyAllButton text={message} />
       </DialogFooter>
     </>
   );
@@ -154,6 +141,7 @@ export function AddClientButton() {
           setOpen(true);
         }}
       >
+        <PlusIcon data-icon="inline-start" />
         Add client
       </Button>
       <DialogContent>

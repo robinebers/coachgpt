@@ -10,10 +10,19 @@ export function SignInForm({ firstTime }: { firstTime: boolean }) {
 
   return (
     <form action={action} className="flex flex-col gap-3">
-      <Input name="email" type="email" placeholder="Email" autoComplete="email" defaultValue={state?.email} required />
+      <Input
+        name="email"
+        type="email"
+        aria-label="Email"
+        placeholder="Email"
+        autoComplete="email"
+        defaultValue={state?.email}
+        required
+      />
       <Input
         name="password"
         type="password"
+        aria-label="Password"
         placeholder="Password"
         autoComplete={firstTime ? "new-password" : "current-password"}
         required

@@ -1,5 +1,6 @@
-import { isToolUIPart, type UIMessage } from "ai";
+import { isToolUIPart, type UIDataTypes, type UIMessage } from "ai";
 import { asc, desc, eq, getTableColumns } from "drizzle-orm";
+import { z } from "zod";
 import { chats, db, messages, user } from "@/lib/db";
 
 export async function listChats(userId: string, limit?: number) {
@@ -34,9 +35,19 @@ export async function getMessages(chatId: string): Promise<UIMessage[]> {
   return rows.map(({ id, role, parts }) => ({ id, role, parts }));
 }
 
+type SearchCount = { excerpts: number };
+
+export const searchKnowledgeInput = z.object({ query: z.string().describe("What to look for, in plain words") });
+
+export type ChatMessage = UIMessage<
+  unknown,
+  UIDataTypes,
+  { searchKnowledge: { input: z.infer<typeof searchKnowledgeInput>; output: SearchCount } }
+>;
+
 // Search results hold the coach's knowledge files word for word. Only the query and the
 // excerpt count go to the browser or back to the model on later turns.
-export function withSearchCounts(messages: UIMessage[]): UIMessage[] {
+export function withSearchCounts(messages: UIMessage[]): ChatMessage[] {
   return messages.map((message) => ({
     ...message,
     parts: message.parts.flatMap((part): UIMessage["parts"] => {
@@ -44,10 +55,10 @@ export function withSearchCounts(messages: UIMessage[]): UIMessage[] {
       if (part.state !== "output-available") return [];
       return [{ ...part, output: excerptCount(part.output), callProviderMetadata: undefined }];
     }),
-  }));
+  })) as ChatMessage[];
 }
 
-export function excerptCount(output: unknown) {
+export function excerptCount(output: unknown): SearchCount {
   return { excerpts: Array.isArray(output) ? output.length : 0 };
 }
 

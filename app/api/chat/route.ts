@@ -11,11 +11,18 @@ import {
   type UIMessage,
   type UIMessageChunk,
 } from "ai";
-import { z } from "zod";
 import { getAssistant } from "@/assistants";
 import { coachConfig } from "@/coach.config";
 import { getUser } from "@/lib/auth";
-import { excerptCount, getChatFor, getMessages, saveMessage, titleFrom, withSearchCounts } from "@/lib/chats";
+import {
+  excerptCount,
+  getChatFor,
+  getMessages,
+  saveMessage,
+  searchKnowledgeInput,
+  titleFrom,
+  withSearchCounts,
+} from "@/lib/chats";
 import { chats, db } from "@/lib/db";
 import { getInstructions } from "@/lib/instructions";
 import { hasReadyFiles, searchKnowledge } from "@/lib/knowledge";
@@ -69,7 +76,7 @@ export async function POST(request: Request) {
       searchKnowledge: tool({
         description:
           "Search this assistant's knowledge files. Use it whenever the answer could be in the coach's materials.",
-        inputSchema: z.object({ query: z.string().describe("What to look for, in plain words") }),
+        inputSchema: searchKnowledgeInput,
         execute: ({ query }) => searchKnowledge(assistant.slug, query),
       }),
     },
