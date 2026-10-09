@@ -1,4 +1,4 @@
-import { desc } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { assistants } from "@/assistants";
 import { Card } from "@/components/ui/card";
 import { isAdminEmail, requireAdmin } from "@/lib/auth";
@@ -8,10 +8,12 @@ import { AddClientButton, ClientRow } from "./clients";
 import { AssistantFiles } from "./files";
 import { InstructionsButton } from "./instructions";
 
+const uploadDate = new Intl.DateTimeFormat("en", { month: "short", day: "numeric" });
+
 export default async function AdminPage() {
   await requireAdmin();
   const [files, people, savedInstructions] = await Promise.all([
-    db.select().from(documents).orderBy(desc(documents.createdAt)),
+    db.select().from(documents).orderBy(sql`lower(${documents.name})`),
     db.select().from(user).orderBy(user.name),
     db.select().from(assistantInstructions),
   ]);
@@ -52,7 +54,7 @@ export default async function AdminPage() {
             assistant={{ slug, name: assistant.name, description: assistant.description }}
             files={files
               .filter((file) => file.assistantSlug === slug)
-              .map(({ id, name, status, error }) => ({ id, name, status, error }))}
+              .map(({ id, name, status, error, createdAt }) => ({ id, name, status, error, uploaded: uploadDate.format(createdAt) }))}
             action={
               <InstructionsButton
                 assistant={{ slug, name: assistant.name }}

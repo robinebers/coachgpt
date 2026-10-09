@@ -24,6 +24,7 @@ type ServerFile = {
   name: string;
   status: "processing" | "ready" | "failed";
   error: string | null;
+  uploaded: string;
 };
 
 type PendingUpload = { id: string; name: string } & ({ state: "uploading" } | { state: "failed"; error: string });
@@ -87,11 +88,13 @@ function FileRow({
   name,
   status,
   error,
+  uploaded,
   action,
 }: {
   name: string;
   status: "uploading" | "processing" | "ready" | "failed";
   error?: string | null;
+  uploaded?: string;
   action?: ReactNode;
 }) {
   return (
@@ -106,6 +109,7 @@ function FileRow({
       </ItemContent>
       <ItemActions className="shrink-0">
         <FileStatus status={status} error={error} />
+        {uploaded && <span className="text-muted-foreground text-xs">· {uploaded}</span>}
         {action}
       </ItemActions>
     </Item>
@@ -224,6 +228,7 @@ export function AssistantFiles({
                 name={file.name}
                 status={file.status}
                 error={file.error}
+                uploaded={file.uploaded}
                 action={<DeleteFileButton id={file.id} name={file.name} />}
               />
             ))}

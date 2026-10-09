@@ -24,6 +24,8 @@ export async function addDocument(assistantSlug: string, formData: FormData) {
     return { error: `Files can be up to ${maxFileSizeMB} MB. Split it into smaller files.` };
   }
   const bytes = new Uint8Array(await file.arrayBuffer());
+  // A file with the same name replaces the old one. Its chunks are deleted with it.
+  await db.delete(documents).where(and(eq(documents.assistantSlug, assistantSlug), eq(documents.name, file.name)));
   const [document] = await db
     .insert(documents)
     .values({ assistantSlug, name: file.name, status: "processing" })
